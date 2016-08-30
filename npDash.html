@@ -40,8 +40,8 @@
             { "id": "EDGE_183" },
             { "id": "EDGE_183'" },
             { "id": "EDGE_55"},
-            { "id": "EDGE_55'"},    // the '(prime) designation might be difficult to differentiate
-            { "id": "EDGE_12"},
+            { "id": "EDGE_55'"},    // The '(prime) designation might be difficult to differentiate
+            { "id": "EDGE_12"},     // Any errors in id results in infinite loops
             { "id": "EDGE_12'"},
             { "id": "EDGE_167"},
             { "id": "EDGE_167'"},
@@ -155,7 +155,6 @@
         // Draw the contig adjacencies
         visual.force('link')
             .links(contigLinks);
-        //force.start();
 
         /**
          * Specify forces between nodes to prevent them from stacking on each
@@ -164,7 +163,7 @@
          * Positive strength = attraction.
          */
         visual.force("charge")
-            .strength(-90);
+            .strength(-90); // Selected based on trial and error
      </script>
   </body>
 </html>
