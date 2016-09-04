@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!-- Initial prototpe of the genome visualisation tool -->
+<html lang="en">
+   <head>
+       <!-- <script type="text/javascript" src="d3.min.js"></script> --> <!-- Local copy-->
+       <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Direct link -->
+       <style>
+            .pairs {
+               stroke: #F00;
+               stroke-width: 8px;
+            }
+            .links {
+               stroke: #000;
+               stroke-width: 1px;
+            }
+            .node {
+              /*cursor: move; */
+              fill: #ccc;
+              stroke: #000;
+              stroke-width: 1.5px;
+          }
+          
+          .node.fixed {
+              fill: #f00;
+          }
+      </style>
+   </head>
+  <body>
+     <script>
+        /* Set the SVG canvas size */
+        var width = 800,
+            height = 600;   
+            
+        /**
+         * Datastructure to store the contig ends.
+         */
+        var nodes = [
+            { "id": "EDGE_10" },
+            { "id": "EDGE_10'" },
+            { "id": "EDGE_183" },
+            { "id": "EDGE_183'" },
+            { "id": "EDGE_55"},
+            { "id": "EDGE_55'"},    // The '(prime) designation might be difficult to differentiate
+            { "id": "EDGE_12"},     // Any errors in id results in infinite loops
+            { "id": "EDGE_12'"},
+            { "id": "EDGE_167"},
+            { "id": "EDGE_167'"},
+            { "id": "EDGE_93"},
+            { "id": "EDGE_93'"},
+            ];
+
+        /**
+         * This is the datastructure that will store most of the contig information.
+         * Sequence data will not be included here to reduce bandwidth usage.
+         */
+        var contigData = [
+            { source: "EDGE_10", target: "EDGE_10'", length: 128, coverage: 448 },
+            { source: "EDGE_183", target: "EDGE_183'", length: 128, coverage: 268 },
+            { source: "EDGE_55", target: "EDGE_55'", length: 167, coverage: 181.85},
+            { source: "EDGE_12", target: "EDGE_12'", length: 130, coverage: 724.333},
+            { source: "EDGE_167", target: "EDGE_167'", length: 839456, coverage: 89.7998},
+            { source: "EDGE_93", target: "EDGE_93'", length: 148, coverage: 181.048}, 
+            ];
+
+        /**
+         * Prototype datastructure to store the contig links decribed in the
+         * FASTG file.
+         */
+        var contigLinks = [
+            { source: "EDGE_10", target: "EDGE_183" },
+            { source: "EDGE_10", target: "EDGE_55'" },
+            { source: "EDGE_10'", target: "EDGE_12'" },
+            { source: "EDGE_183'", target: "EDGE_167'" },
+            { source: "EDGE_183'", target: "EDGE_93'" },
+            ];
+
+        /* Specify the SVG canvas */
+        var svg = d3.select('body').append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        /* Specify the forces that will be used by the visualisation */
+        var visual = d3.forceSimulation()
+            .nodes(nodes)
+            .force("pairs", d3.forceLink().id(function(d) { return d.id; }))
+            .force("link", d3.forceLink().id(function(d) { return d.id; }))
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        /**
+         * Select and join contig nodes to create the graph edge (DNA sequence).
+         * Data (contigData) is bound to the HTML? elements 'pairs'. Drawing 
+         * will commence at the start of simulation.
+         */
+        var pairs = svg.selectAll('.pairs')
+            .data(contigData)
+            .enter().append('line')
+            .attr('class', 'pairs');
+
+        /* Select and join the contig adjacencies */
+        var links = svg.selectAll('.links')
+            .data(contigLinks)
+            .enter().append('line')
+            .attr('class', 'links');
+
+        /**
+         * Start drawing the nodes
+         * In future versions the nodes could be hidden until mouse hover 
+         * event.
+         */
+        var node = svg.selectAll('.node')
+            .data(nodes)
+            .enter().append('circle')
+            .attr('class', 'node');
+
+        /**
+         * Start the real-time visualisation
+         * 
+         */
+        visual.on('tick', function() {   //'end' or 'tick' can be specified
+
+            node.attr('r', 4)                               // Node radius
+                .attr('cx', function(d) { return d.x; })    // Node x-coordinate
+                .attr('cy', function(d) { return d.y; });   // Node y-coordinate
+
+            pairs.attr('x1', function(d) { return d.source.x; })
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+
+            links.attr('x1', function(d) { return d.source.x; })
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+        }); // End force.on anon function
+
+        /**
+         * Scaling the lengths to ensure that the contigs will fit on in the 
+         * SVG canvas.
+         */
+        var lengthScale = d3.scaleLinear()
+            .domain([0, d3.max(contigData, function(d) {
+                return d.length;
+            })])
+            .range([0,256]);
+
+        // Draw the contig
+        visual.force('pairs')
+            .links(contigData)
+            .distance(function(d,i) {
+                console.log(d);
+                return lengthScale(d.length);
+            });
+    
+        // Draw the contig adjacencies
+        visual.force('link')
+            .links(contigLinks);
+
+        /**
+         * Specify forces between nodes to prevent them from stacking on each
+         * other.
+         * Negative strength = repulsion.
+         * Positive strength = attraction.
+         */
+        visual.force("charge")
+            .strength(-90); // Selected based on trial and error
+     </script>
+  </body>
+</html>
