@@ -2,8 +2,8 @@
 <!-- Initial prototpe of the genome visualisation tool -->
 <html lang="en">
     <head>
-        <script type="text/javascript" src="d3.min.js"></script> <!-- Local copy-->
-        <!-- <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Direct link -->
+        <!--<script type="text/javascript" src="d3.min.js"></script>  Local copy-->
+        <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Direct link -->
         <style>
             .pairs {
                stroke: #F00;
@@ -30,24 +30,6 @@
         /* Set the SVG canvas size */
         var width = 800,
             height = 600;   
-            
-        /**
-         * Datastructure to store the contig ends.
-         */
-        var nodes = [
-            { "id": "EDGE_10" },
-            { "id": "EDGE_10'" },
-            { "id": "EDGE_183" },
-            { "id": "EDGE_183'" },
-            { "id": "EDGE_55"},
-            { "id": "EDGE_55'"},    // The '(prime) designation might be difficult to differentiate
-            { "id": "EDGE_12"},     // Any errors in id results in infinite loops
-            { "id": "EDGE_12'"},
-            { "id": "EDGE_167"},
-            { "id": "EDGE_167'"},
-            { "id": "EDGE_93"},
-            { "id": "EDGE_93'"},
-            ];
 
         /**
          * This is the datastructure that will store most of the contig information.
@@ -60,18 +42,6 @@
             { source: "EDGE_12", target: "EDGE_12'", length: 130, coverage: 724.333},
             { source: "EDGE_167", target: "EDGE_167'", length: 839456, coverage: 89.7998},
             { source: "EDGE_93", target: "EDGE_93'", length: 148, coverage: 181.048}, 
-            ];
-
-        /**
-         * Prototype datastructure to store the contig links decribed in the
-         * FASTG file.
-         */
-        var contigLinks = [
-            { source: "EDGE_10", target: "EDGE_183" },
-            { source: "EDGE_10", target: "EDGE_55'" },
-            { source: "EDGE_10'", target: "EDGE_12'" },
-            { source: "EDGE_183'", target: "EDGE_167'" },
-            { source: "EDGE_183'", target: "EDGE_93'" },
             ];
 
         /* Specify the SVG canvas */
@@ -97,12 +67,6 @@
             .enter().append('line')
             .attr('class', 'pairs');
 
-        /* Select and join the contig adjacencies */
-        var links = svg.selectAll('.links')
-            .data(contigLinks)
-            .enter().append('line')
-            .attr('class', 'links');
-
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
             if (error) throw error;
@@ -123,6 +87,18 @@
 
             visual
                 .nodes(d.nodes);
+
+            /* Select and join the contig adjacencies */
+            var links = svg.selectAll('.links')
+                .data(d.contigLinks)
+                .enter().append('line')
+                .attr('class', 'links');
+
+                console.log(d.contigLinks);
+
+                            // Draw the contig adjacencies
+            visual.force('link')
+                .links(d.contigLinks);
 
             /**
              * Start the real-time visualisation
@@ -162,10 +138,6 @@
                     console.log(d);
                     return lengthScale(d.length);
                 });
-    
-            // Draw the contig adjacencies
-            visual.force('link')
-                .links(contigLinks);
 
             /**
              * Specify forces between nodes to prevent them from stacking on each
@@ -174,7 +146,7 @@
              * Positive strength = attraction.
              */
             visual.force("charge")
-                .strength(-50); // Selected based on trial and error
+                .strength(-3); // Selected based on trial and error
 
         }); // End d3.json read
         </script>
