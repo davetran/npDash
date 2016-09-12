@@ -29,20 +29,7 @@
     <script>
         /* Set the SVG canvas size */
         var width = 800,
-            height = 600;   
-
-        /**
-         * This is the datastructure that will store most of the contig information.
-         * Sequence data will not be included here to reduce bandwidth usage.
-         */
-        var contigData = [
-            { source: "EDGE_10", target: "EDGE_10'", length: 128, coverage: 448 },
-            { source: "EDGE_183", target: "EDGE_183'", length: 128, coverage: 268 },
-            { source: "EDGE_55", target: "EDGE_55'", length: 167, coverage: 181.85},
-            { source: "EDGE_12", target: "EDGE_12'", length: 130, coverage: 724.333},
-            { source: "EDGE_167", target: "EDGE_167'", length: 839456, coverage: 89.7998},
-            { source: "EDGE_93", target: "EDGE_93'", length: 148, coverage: 181.048}, 
-            ];
+            height = 600;
 
         /* Specify the SVG canvas */
         var svg = d3.select('body').append('svg')
@@ -56,16 +43,6 @@
             .force("link", d3.forceLink().id(function(d) { return d.id; }))
             .force("charge", d3.forceManyBody())
             .force("center", d3.forceCenter(width / 2, height / 2));
-        
-        /**
-         * Select and join contig nodes to create the graph edge (DNA sequence).
-         * Data (contigData) is bound to the HTML? elements 'pairs'. Drawing 
-         * will commence at the start of simulation.
-         */
-        var pairs = svg.selectAll('.pairs')
-            .data(contigData)
-            .enter().append('line')
-            .attr('class', 'pairs');
 
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
@@ -88,6 +65,34 @@
             visual
                 .nodes(d.nodes);
 
+            /**
+             * Select and join contig nodes to create the graph edge (DNA sequence).
+             * Data (contigData) is bound to the HTML? elements 'pairs'. Drawing 
+             * will commence at the start of simulation.
+             */
+            var pairs = svg.selectAll('.pairs')
+                .data(d.contigData)
+                .enter().append('line')
+                .attr('class', 'pairs');
+
+            /**
+             * Scaling the lengths to ensure that the contigs will fit on in the 
+             * SVG canvas.
+             */
+            var lengthScale = d3.scaleLinear()
+                .domain([0, d3.max(d.contigData, function(d) {
+                    return d.length;
+                })])
+                .range([0,256]);
+
+            // Draw the contig
+            visual.force('pairs')
+                .links(d.contigData)
+                .distance(function(d,i) {
+                    console.log(d);
+                    return lengthScale(d.length);
+                });
+
             /* Select and join the contig adjacencies */
             var links = svg.selectAll('.links')
                 .data(d.contigLinks)
@@ -106,7 +111,7 @@
              */
             visual.on('tick', function() {   //'end' or 'tick' can be specified
 
-                node.attr('r', 4)                               // Node radius
+                node.attr('r', 1)                               // Node radius
                     .attr('cx', function(d) { return d.x; })    // Node x-coordinate
                     .attr('cy', function(d) { return d.y; });   // Node y-coordinate
 
@@ -120,24 +125,6 @@
                     .attr('x2', function(d) { return d.target.x; })
                     .attr('y2', function(d) { return d.target.y; });
             }); // End force.on anon function
-
-            /**
-             * Scaling the lengths to ensure that the contigs will fit on in the 
-             * SVG canvas.
-             */
-            var lengthScale = d3.scaleLinear()
-                .domain([0, d3.max(contigData, function(d) {
-                    return d.length;
-                })])
-                .range([0,256]);
-
-            // Draw the contig
-            visual.force('pairs')
-                .links(contigData)
-                .distance(function(d,i) {
-                    console.log(d);
-                    return lengthScale(d.length);
-                });
 
             /**
              * Specify forces between nodes to prevent them from stacking on each
