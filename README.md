@@ -15,17 +15,18 @@ Another option is to host a local-server using node.js or python:
 Go to the directory were npDash.html is located and run: 
 ```
 python -m SimpleHTTPServer
-
+```
 #### Python 3.x
 Go to the directory were npDash.html is located and run: 
 ```
 python -m http-server
-
+```
 #### Node.js
 Install the http-server package using npm:
 ```
 npm install http-server -g
-
+```
 Go to the directory were npDash.html is located and run: 
 ```
 http-server
+```
