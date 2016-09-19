@@ -10,7 +10,7 @@
                stroke-width: 8px;
             }
             .links {
-               stroke: #000;
+               stroke: #444;
                stroke-width: 1px;
             }
             .node {
@@ -27,6 +27,11 @@
     </head>
 <body>
     <script>
+        /**
+         *  Date: 19-SEP-2016
+         *  
+         */
+
         /* Set the SVG canvas size */
         var width = 800,
             height = 600;
@@ -43,6 +48,7 @@
             .force("link", d3.forceLink().id(function(d) { return d.id; }))
             .force("charge", d3.forceManyBody())
             .force("center", d3.forceCenter(width / 2, height / 2));
+            //.force("collision", d3.forceCollide(2));
 
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
@@ -60,7 +66,7 @@
                 .enter().append('circle')
                 .attr('class', 'node');
 
-            console.log(d.nodes);
+            //console.log(d.nodes);
 
             visual
                 .nodes(d.nodes);
@@ -89,9 +95,11 @@
             visual.force('pairs')
                 .links(d.contigData)
                 .distance(function(d,i) {
-                    console.log(d);
+                    //console.log(d);
                     return lengthScale(d.length);
-                });
+                })
+                .iterations(10); // Enforce the distance (adds runtime cost)
+
 
             /* Select and join the contig adjacencies */
             var links = svg.selectAll('.links')
@@ -99,11 +107,13 @@
                 .enter().append('line')
                 .attr('class', 'links');
 
-                console.log(d.contigLinks);
+                //console.log(d.contigLinks);
 
-                            // Draw the contig adjacencies
+            // Draw the contig adjacencies
             visual.force('link')
-                .links(d.contigLinks);
+                .links(d.contigLinks)//;
+                .distance(10)   // Also reduce the distance between adj edges
+                .iterations(10);    // Maybe add as a user setting
 
             /**
              * Start the real-time visualisation
@@ -111,9 +121,9 @@
              */
             visual.on('tick', function() {   //'end' or 'tick' can be specified
 
-                node.attr('r', 1)                               // Node radius
-                    .attr('cx', function(d) { return d.x; })    // Node x-coordinate
+                node.attr('cx', function(d) { return d.x; })    // Node x-coordinate
                     .attr('cy', function(d) { return d.y; });   // Node y-coordinate
+                    //.attr('r', 1)                  // Node radius (Not required)
 
                 pairs.attr('x1', function(d) { return d.source.x; })
                     .attr('y1', function(d) { return d.source.y; })
@@ -131,9 +141,14 @@
              * other.
              * Negative strength = repulsion.
              * Positive strength = attraction.
+             * manyBody.distanceMin and manyBody.distanceMax used to localise
+             * the forces between nearby nodes instead of over the whole
+             * visualisation
              */
             visual.force("charge")
-                .strength(-3); // Selected based on trial and error
+                .strength(-40)
+                .distanceMin(10)
+                .distanceMax(100); // Selected based on trial and error
 
         }); // End d3.json read
         </script>
