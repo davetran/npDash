@@ -2,6 +2,7 @@
 <!-- Initial prototpe of the genome visualisation tool -->
 <html lang="en">
     <head>
+        <meta charset="UTF-8"> 
         <!--<script type="text/javascript" src="d3.min.js"></script>  Local copy-->
         <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Direct link -->
         <style>
@@ -9,12 +10,16 @@
                stroke: #F00;
                stroke-width: 8px;
             }
+            .pairs text {
+               font: 7px sans-serif;
+               stroke: #000;
+               stroke-width: 0px;
+            }
             .links {
                stroke: #444;
                stroke-width: 1px;
             }
             .node {
-              /*cursor: move; */
               fill: #ccc;
               stroke: #000;
               stroke-width: 1.5px;
@@ -28,9 +33,12 @@
 <body>
     <script>
         /**
-         *  Date: 19-SEP-2016
+         *  Date: 14-OCT-2016
          *  
          */
+        
+        /* Variable to set the visualisation to reload data */
+        var dynamic = 0;
 
         /* Set the SVG canvas size */
         var width = 800,
@@ -50,37 +58,76 @@
             .force("center", d3.forceCenter(width / 2, height / 2));
             //.force("collision", d3.forceCollide(2));
 
+        /* Selections */
+        var node = svg.selectAll('circle');
+        var pairs = svg.selectAll('.pairs');
+        var links = svg.selectAll('.links');
+
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
             if (error) throw error;
 
-            /**
-            * Start drawing the nodes
-            * In future versions the nodes could be hidden until mouse hover 
-            * event.
-            */
-            //console.log(d.nodes);
+            /* Draw the visual */
+            render(d);
+
+        }); // End d3.json read
+
+        
+        if (dynamic == 1 ) {
+            setInterval(function() {
+                ///* Read the JSON file located in the same directory */
+                d3.json("assembly.json", function(error, d) {
+                
+                if (error) throw error;          
+                
+                render(d);
+                }); // End d3.json read
+                console.log('output');
+            }, 60000); // Refresh once every 60 seconds
+        }
+
+        /* Render function */
+        function render(d) {
+
+            // Update the nodes
+            // This selection will return update()
+            node = node.data(d.nodes);
+
+            // Remove nodes with no data associated
+            node.exit().remove();
+
+            // Build the elements for the new nodes
+            var nodeup = node.enter().append('g')
+                .attr('class', 'node')
+                .attr("id", function(d) {
+                    return d.id
+                });
             
-            var node = svg.selectAll('.node')
-                .data(d.nodes)
-                .enter().append('circle')
-                .attr('class', 'node');
+            nodeup.append('circle');
 
+            node = nodeup.merge(node);
+            visual.nodes(d.nodes);
             //console.log(d.nodes);
-
-            visual
-                .nodes(d.nodes);
 
             /**
              * Select and join contig nodes to create the graph edge (DNA sequence).
              * Data (contigData) is bound to the HTML? elements 'pairs'. Drawing 
              * will commence at the start of simulation.
              */
-            var pairs = svg.selectAll('.pairs')
-                .data(d.contigData)
-                .enter().append('line')
+            pairs = pairs.data(d.contigData);
+
+            pairs.exit().remove();
+
+            /* Need to group the elements to meet HTML spec for text labels */
+            var pairup = pairs.enter().append('g')
                 .attr('class', 'pairs');
 
+            pairup.append('line');
+            pairup.append('text')
+                .text(function(d) {return d.source});
+
+            pairs = pairup.merge(pairs);
+            
             /**
              * Scaling the lengths to ensure that the contigs will fit on in the 
              * SVG canvas.
@@ -89,7 +136,7 @@
                 .domain([0, d3.max(d.contigData, function(d) {
                     return d.length;
                 })])
-                .range([0,256]);
+                .range([0,256]); // Range 0 - 250 px
 
             // Draw the contig
             visual.force('pairs')
@@ -102,18 +149,24 @@
 
 
             /* Select and join the contig adjacencies */
-            var links = svg.selectAll('.links')
-                .data(d.contigLinks)
-                .enter().append('line')
-                .attr('class', 'links');
+            links = links.data(d.contigLinks);
 
-                //console.log(d.contigLinks);
+            links.exit().remove();
 
+            var linkup = links.enter()
+                .append('line')
+                .attr('class','links');
+                //.exit().remove();
+
+            links = linkup.merge(links);
+
+            //console.log(d.contigLinks);
+            
             // Draw the contig adjacencies
             visual.force('link')
                 .links(d.contigLinks)//;
                 .distance(10)   // Also reduce the distance between adj edges
-                .iterations(10);    // Maybe add as a user setting
+              .iterations(10);    // Maybe add as a user setting
 
             /**
              * Start the real-time visualisation
@@ -121,14 +174,30 @@
              */
             visual.on('tick', function() {   //'end' or 'tick' can be specified
 
-                node.attr('cx', function(d) { return d.x; })    // Node x-coordinate
+                node.select('circle')
+                    .attr('cx', function(d) { return d.x; })    // Node x-coordinate
                     .attr('cy', function(d) { return d.y; });   // Node y-coordinate
                     //.attr('r', 1)                  // Node radius (Not required)
 
-                pairs.attr('x1', function(d) { return d.source.x; })
-                    .attr('y1', function(d) { return d.source.y; })
-                    .attr('x2', function(d) { return d.target.x; })
-                    .attr('y2', function(d) { return d.target.y; });
+                // Transform the svg group associated with the nodes
+                node.attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                    });
+                
+                // Transform the svg group associated with the sequence
+                pairs.attr("transform", function(d) {
+                    return "translate(" + d.source.x + "," + d.source.y + ")";
+                    });
+                
+                /* Since the pairs group has been transformed their associated 
+                 * coordinates are now relative. We need to add x & y-axis
+                 * offsets for correct display.
+                 */
+                pairs.select('line')
+                    .attr('x1', function(d) { return d.source.x - d.source.x; })
+                    .attr('y1', function(d) { return d.source.y - d.source.y; })
+                    .attr('x2', function(d) { return d.target.x - d.source.x; })
+                    .attr('y2', function(d) { return d.target.y - d.source.y; });
 
                 links.attr('x1', function(d) { return d.source.x; })
                     .attr('y1', function(d) { return d.source.y; })
@@ -136,6 +205,8 @@
                     .attr('y2', function(d) { return d.target.y; });
             }); // End force.on anon function
 
+            visual.restart().alpha(1); // Re-energise the simulation
+            console.log("Finished");
             /**
              * Specify forces between nodes to prevent them from stacking on each
              * other.
@@ -146,11 +217,10 @@
              * visualisation
              */
             visual.force("charge")
-                .strength(-40)
-                .distanceMin(10)
-                .distanceMax(100); // Selected based on trial and error
-
-        }); // End d3.json read
+                .strength(-180)
+                .distanceMin(25)
+                .distanceMax(80); // Selected based on trial and error
+        }
         </script>
     </body>
 </html>
