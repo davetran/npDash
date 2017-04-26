@@ -70,7 +70,8 @@
     <div id="visual">
     <script>
         /**
-         *  Date: 13-MAR-2017
+         *  Date: 26-APR-2017
+         *  
          *  
          */
         
@@ -98,7 +99,7 @@
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("x", d3.forceX())
             .force("y", d3.forceY())
-            .on('end', ticked); // 'end'
+            .on('tick', ticked); // 'end'
             //.force("collision", d3.forceCollide(2));
         
         visual.stop();
@@ -167,7 +168,6 @@
             node2.append('circle');
             // Merge the new nodes into the main selection.
             node = node.merge(node2);
-            
 
             /* Update the contigs */
             // TODO rename pairs to contigs
@@ -187,11 +187,27 @@
             // d3.force will assign this group x-y coordinates.
             pairs2 = pairs.enter().append('g')
                 .attr('class', 'pairs2'); // Refactor to contigs?
-            
+
             // Append the line and text properties to the group elements.
-            pairs2.append('line');
+            pairs2.append('line')
+                .on('mouseover', function(d) {
+                    console.log('hover');
+                    console.log(d3.select(this));
+                    d3.select(this).style('stroke','red');
+                    ticked();
+                })
+                .on('mouseout', function(d) {
+                    d3.select(this).style('stroke','blue');
+                    ticked();
+                })
+                .call(d3.drag()
+                       .on("start", dragstarted)
+                       .on("drag", dragged)
+                       .on("end", dragended));
             pairs2.append('text')
                 .text(function(d) {return d.source});
+
+            
             // Merge the new pairs into the main pair selection
             pairs = pairs.merge(pairs2);
 
@@ -267,19 +283,22 @@
 
 
             // Add transitions and update the svg elements
-            pairs.select('line').transition().duration(2000)
+            //pairs.select('line').transition().duration(2000)
+            pairs.select('line')
                 .attr('x1', function(d) { return d.source.x;})
                 .attr('y1', function(d) { return d.source.y; })
                 .attr('x2', function(d) { return d.target.x; })
                 .attr('y2', function(d) { return d.target.y; });
 
             // Add transitions and update the svg elements
-            pairs.select('text').transition().duration(2000)
+            //pairs.select('text').transition().duration(2000)
+            pairs.select('text')
                 .attr('x', function(d) { return (d.source.x + d.target.x)/2;})
                 .attr('y', function(d) { return (d.source.y + d.target.y)/2; });
 
             // Add transitions and update the svg elements
-            links.select('line').transition().duration(2000)
+            //links.select('line').transition().duration(2000)
+            links.select('line')
                 .attr('x1', function(d) { return d.source.x; })
                 .attr('y1', function(d) { return d.source.y; })
                 .attr('x2', function(d) { return d.target.x; })
@@ -287,6 +306,31 @@
                     
            // }); // End force.on anon function
         }
+
+function dragstarted(d) {
+  if (!d3.event.active) visual.alphaTarget(0.3).restart();
+    d.source.fx = d.source.x + (d3.event.x - ((d.source.x + d.target.x)/2));
+    d.source.fy = d.source.y + (d3.event.y - ((d.source.y + d.target.y)/2));
+    d.target.fx = d.target.x + (d3.event.x - ((d.source.x + d.target.x)/2));
+    d.target.fy = d.target.y + (d3.event.y - ((d.source.y + d.target.y)/2));
+}
+
+function dragged(d) {
+  var offsetx = d3.event.x - ((d.source.x + d.target.x)/2)
+  var offsety = d3.event.y - ((d.source.y + d.target.y)/2)
+  d.source.fx = d.source.fx + offsetx;
+  d.source.fy = d.source.fy + offsety;
+  d.target.fx = d.target.fx  + offsetx;
+  d.target.fy = d.target.fy  + offsety;
+  
+  console.log('dragged');
+}
+
+function dragended(d) {
+  if (!d3.event.active) visual.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
 
         </script>
         </div> <!--id=npDash-->
