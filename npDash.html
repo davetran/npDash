@@ -2,35 +2,82 @@
 <!-- Initial prototpe of the genome visualisation tool -->
 <html lang="en">
     <head>
-        <!--<script type="text/javascript" src="d3.min.js"></script>  Local copy-->
-        <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Direct link -->
+        <meta charset="UTF-8"> 
+        <script type="text/javascript" src="d3.min.js"></script>  <!--Local copy-->
+        <!--<script src="https://d3js.org/d3.v4.min.js"></script> sDirect link -->
         <style>
             .pairs {
                stroke: #F00;
                stroke-width: 8px;
+               opacity: 0.9;
+            }
+            .pairs text {
+               font: 7px sans-serif;
+               stroke: #000;
+               stroke-width: 0px;
+               opacity: 1.0;
+            }
+            .pairs2 {
+               stroke: blue;
+               stroke-width: 8px;
+               opacity: 0.9;
+            }
+            .pairs2 text {
+               font: 7px sans-serif;
+               stroke: #000;
+               stroke-width: 0px;
+               opacity: 1.0;
             }
             .links {
-               stroke: #444;
+               stroke: dimgray;
                stroke-width: 1px;
             }
+            .links2 {
+               stroke: green;
+               stroke-width: 2px;
+            }
             .node {
-              /*cursor: move; */
               fill: #ccc;
               stroke: #000;
               stroke-width: 1.5px;
+              opacity: 0.2;
             }
           
             .node.fixed {
                 fill: #f00;
             }
+            .controls {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                font: 7px sans-serif;
+                background-color:lavenderblush;
+                width:800px;
+            }
+            .visual {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+                border: 1px solid darkgrey;
+            }
+            p.normal {
+                font-style: normal;
+                font-size: 14px;
+            }
         </style>
     </head>
 <body>
+    <div id="visual">
     <script>
         /**
-         *  Date: 19-SEP-2016
+         *  Date: 13-MAR-2017
          *  
          */
+        
+        /* Variable to set the visualisation to reload data */
+        var dynamic = 0;
+        // Seconds for timer
+        var seconds = 10;
 
         /* Set the SVG canvas size */
         var width = 800,
@@ -39,7 +86,8 @@
         /* Specify the SVG canvas */
         var svg = d3.select('body').append('svg')
             .attr('width', width)
-            .attr('height', height);
+            .attr('height', height)
+            .attr('class','visual');
 
         /* Specify the forces that will be used by the visualisation */
         var visual = d3.forceSimulation()
@@ -47,49 +95,136 @@
             .force("pairs", d3.forceLink().id(function(d) { return d.id; }))
             .force("link", d3.forceLink().id(function(d) { return d.id; }))
             .force("charge", d3.forceManyBody())
-            .force("center", d3.forceCenter(width / 2, height / 2));
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("x", d3.forceX())
+            .force("y", d3.forceY())
+            .on('end', ticked); // 'end'
             //.force("collision", d3.forceCollide(2));
+        
+        visual.stop();
+
+        /* Selections */
+        var node = svg.selectAll('.node');
+        var pairs = svg.selectAll('.pairs');
+        var links = svg.selectAll('.links');
 
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
             if (error) throw error;
 
-            /**
-            * Start drawing the nodes
-            * In future versions the nodes could be hidden until mouse hover 
-            * event.
-            */
-            //console.log(d.nodes);
+            /* Update the data using the JSON */
+            update(d);
+            /* Re-energise the simulation */
+            visual.alpha(1).restart();
+
+        }); // End d3.json read
+
+        /* This block of code will continuously operate to provide real-time functionality 
+         * using the javascript method setInterval().
+         */
+        setInterval(function() {
+            /* Static mode */
+            if (dynamic == 0 ) {
+                document.getElementById("timer").innerHTML = "Static mode"; // does not work?
+            } 
+            /* Real-time */
+            if (dynamic == 1 ) {
+                ///* Read the JSON file located in the same directory */
+                d3.json("assembly.json", function(error, d) {
+                
+                if (error) throw error;
+
+                /* Update the data using the JSON */
+                update(d);
+                /* Re-energise the simulation */
+                visual.alpha(1).restart();
+                seconds = 10; // Not timer not accurate due to 'end' update oddness.
+
+                }); // End d3.json read
+            }
+        }, 10000); // Refresh once every 30 seconds
+
+        /**
+         * Update function 
+         * Uses the data read in the JSON file to peform the 'General update pattern'
+         * See: https://bl.ocks.org/mbostock/3808221
+         * See: https://bost.ocks.org/mike/selection/
+         * See: https://bost.ocks.org/mike/join/
+         */
+        function update(d) {
+
+            /* Updates the nodes */
+            // Bind the data stored in the JSON nodes object.
+            node = node.data(d.nodes, function(d) {return d.id; });
             
-            var node = svg.selectAll('.node')
-                .data(d.nodes)
-                .enter().append('circle')
+            // Remove nodes with no data associated
+            node.exit().remove();
+
+            // Build the elements for the new nodes
+            var node2 = node.enter().append('g')
                 .attr('class', 'node');
 
-            //console.log(d.nodes);
+            node2.append('circle');
+            // Merge the new nodes into the main selection.
+            node = node.merge(node2);
+            
 
-            visual
-                .nodes(d.nodes);
+            /* Update the contigs */
+            // TODO rename pairs to contigs
+            // Bind the data
+            pairs = pairs.data(d.contigData);
 
-            /**
-             * Select and join contig nodes to create the graph edge (DNA sequence).
-             * Data (contigData) is bound to the HTML? elements 'pairs'. Drawing 
-             * will commence at the start of simulation.
-             */
-            var pairs = svg.selectAll('.pairs')
-                .data(d.contigData)
-                .enter().append('line')
-                .attr('class', 'pairs');
+            // When no new contigs are detected, then we will ensure
+            // that the colour for the new contigs are not changed
+            if (pairs.enter().size() != 0) {
+                pairs.attr('class', 'pairs');
+            }
+            // Perform the exit() operation
+            pairs.exit().remove();
 
-            /**
-             * Scaling the lengths to ensure that the contigs will fit on in the 
-             * SVG canvas.
-             */
+            // For each new contig define a new group <g> svg element. 
+            // This group elements will allow for text labels.
+            // d3.force will assign this group x-y coordinates.
+            pairs2 = pairs.enter().append('g')
+                .attr('class', 'pairs2'); // Refactor to contigs?
+            
+            // Append the line and text properties to the group elements.
+            pairs2.append('line');
+            pairs2.append('text')
+                .text(function(d) {return d.source});
+            // Merge the new pairs into the main pair selection
+            pairs = pairs.merge(pairs2);
+
+            // Scaling the lengths to ensure that the contigs will fit on in the 
+            // SVG canvas.
             var lengthScale = d3.scaleLinear()
                 .domain([0, d3.max(d.contigData, function(d) {
                     return d.length;
                 })])
-                .range([0,256]);
+                .range([0,256]); // Range 0 - 250 px
+
+            /* Select and join the contig adjacencies */
+            // Bind the data
+            links = links.data(d.contigLinks);
+            
+            // When no new contigs are detected, then we will ensure
+            // that the colour for the new contigs are not changed
+            if (links.enter().size() != 0) {
+                links.attr('class', 'links');
+            }
+            // Remove the links with no data
+            links.exit().remove();
+
+            // For each new contig define a new svg element
+            var links2 = links.enter().append('g')
+                .attr('class','links2');
+            
+            // Append attributes
+            links2.append('line');
+            links = links.merge(links2)
+            
+            /* Restart the simulation */
+            visual.nodes(d.nodes);
 
             // Draw the contig
             visual.force('pairs')
@@ -100,41 +235,11 @@
                 })
                 .iterations(10); // Enforce the distance (adds runtime cost)
 
-
-            /* Select and join the contig adjacencies */
-            var links = svg.selectAll('.links')
-                .data(d.contigLinks)
-                .enter().append('line')
-                .attr('class', 'links');
-
-                //console.log(d.contigLinks);
-
-            // Draw the contig adjacencies
+           // Draw the contig adjacencies
             visual.force('link')
-                .links(d.contigLinks)//;
-                .distance(10)   // Also reduce the distance between adj edges
-                .iterations(10);    // Maybe add as a user setting
-
-            /**
-             * Start the real-time visualisation
-             * TODO: Separate this out to a function.
-             */
-            visual.on('tick', function() {   //'end' or 'tick' can be specified
-
-                node.attr('cx', function(d) { return d.x; })    // Node x-coordinate
-                    .attr('cy', function(d) { return d.y; });   // Node y-coordinate
-                    //.attr('r', 1)                  // Node radius (Not required)
-
-                pairs.attr('x1', function(d) { return d.source.x; })
-                    .attr('y1', function(d) { return d.source.y; })
-                    .attr('x2', function(d) { return d.target.x; })
-                    .attr('y2', function(d) { return d.target.y; });
-
-                links.attr('x1', function(d) { return d.source.x; })
-                    .attr('y1', function(d) { return d.source.y; })
-                    .attr('x2', function(d) { return d.target.x; })
-                    .attr('y2', function(d) { return d.target.y; });
-            }); // End force.on anon function
+                .links(d.contigLinks)
+                .distance(5)            // Also reduce the distance between adj edges
+                .iterations(5);         // Maybe add as a user setting
 
             /**
              * Specify forces between nodes to prevent them from stacking on each
@@ -146,11 +251,71 @@
              * visualisation
              */
             visual.force("charge")
-                .strength(-40)
-                .distanceMin(10)
+                .strength(-180)
+                .distanceMin(45)
                 .distanceMax(100); // Selected based on trial and error
+        }
 
-        }); // End d3.json read
+        /**
+         * On every 'end' we run the folliowing.
+         * 'end' refers to the end of 
+         */
+        function ticked() {
+            /*
+             * Start the real-time visualisation
+             */
+
+
+            // Add transitions and update the svg elements
+            pairs.select('line').transition().duration(2000)
+                .attr('x1', function(d) { return d.source.x;})
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+
+            // Add transitions and update the svg elements
+            pairs.select('text').transition().duration(2000)
+                .attr('x', function(d) { return (d.source.x + d.target.x)/2;})
+                .attr('y', function(d) { return (d.source.y + d.target.y)/2; });
+
+            // Add transitions and update the svg elements
+            links.select('line').transition().duration(2000)
+                .attr('x1', function(d) { return d.source.x; })
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+                    
+           // }); // End force.on anon function
+        }
+
         </script>
+        </div> <!--id=npDash-->
+        <div class="controls">
+            <h1>Controls will go here</h1>
+            <p class = "normal">
+                <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode
+            </p>
+            <p class = "normal" id="timer">Next update in:</p>
+        <script>
+            // Handle the checkbox [HTML]
+            function handlechb() {
+                var y = document.getElementById("chkbx1").checked;
+                console.log(y);
+                if (y==true) {
+                    dynamic = 1;
+                }
+            }
+            //Countdown timer
+            var x = setInterval(function() {
+                if (seconds == 0 ) {
+                    document.getElementById("timer").innerHTML = "Next update in : Waiting";
+                }
+                else {
+                    seconds = seconds - 1;
+                    document.getElementById("timer").innerHTML = "Next update in: " + seconds;
+                }
+            }, 1000);
+        </script>
+        </div><!--id=control-->
     </body>
 </html>
