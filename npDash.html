@@ -5,26 +5,31 @@
         <meta charset="UTF-8"> 
         <script type="text/javascript" src="d3.min.js"></script>  <!--Local copy-->
         <!--<script src="https://d3js.org/d3.v4.min.js"></script> sDirect link -->
+        <!-- http://paletton.com/palette.php?uid=7010D0kllllaFw0g0qFqFg0w0aF -->
         <style>
+            .visual {
+                background-color: #FFFFFF;
+            }
             .pairs {
                stroke: #F00;
                stroke-width: 8px;
                opacity: 0.9;
             }
             .pairs text {
-               font: 7px sans-serif;
-               stroke: #000;
+               font: 7px 'Open Sans', sans-serif;
+               stroke: darkgrey;
                stroke-width: 0px;
                opacity: 1.0;
             }
             .pairs2 {
-               stroke: blue;
+               stroke: #6F90A2;
                stroke-width: 8px;
-               opacity: 0.9;
+               mix-blend-mode: multiply;
             }
             .pairs2 text {
-               font: 7px sans-serif;
-               stroke: #000;
+               display: none;
+               font: 8px sans-serif;
+               stroke: darkgrey;
                stroke-width: 0px;
                opacity: 1.0;
             }
@@ -33,8 +38,9 @@
                stroke-width: 1px;
             }
             .links2 {
-               stroke: green;
+               stroke: #FFACAA;
                stroke-width: 2px;
+               mix-blend-mode: multiply;
             }
             .node {
               fill: #ccc;
@@ -61,6 +67,7 @@
                 border: 1px solid darkgrey;
             }
             p.normal {
+                font-family: 'Open Sans', sans-serif;
                 font-style: normal;
                 font-size: 14px;
             }
@@ -70,8 +77,7 @@
     <div id="visual">
     <script>
         /**
-         *  Date: 26-APR-2017
-         *  
+         *  Date: 13-MAR-2017
          *  
          */
         
@@ -79,6 +85,18 @@
         var dynamic = 0;
         // Seconds for timer
         var seconds = 10;
+        var mouseEvent = 'Null';
+
+        var timerRestart = 0;
+        var dragTimer = setInterval(function() {
+            if (timerRestart == 0 ) {
+                    // Do nothing.
+                }
+                else {
+                    timerRestart = timerRestart - 1;
+                }
+            }, 1000);
+
 
         /* Set the SVG canvas size */
         var width = 800,
@@ -99,7 +117,8 @@
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("x", d3.forceX())
             .force("y", d3.forceY())
-            .on('tick', ticked); // 'end'
+            .on('tick', null)   // Set the callback as null. This will change when we drag
+            .on('end', end); // 'end'
             //.force("collision", d3.forceCollide(2));
         
         visual.stop();
@@ -163,7 +182,7 @@
 
             // Build the elements for the new nodes
             var node2 = node.enter().append('g')
-                .attr('class', 'node');
+                .attr('class', 'node')
 
             node2.append('circle');
             // Merge the new nodes into the main selection.
@@ -190,20 +209,28 @@
 
             // Append the line and text properties to the group elements.
             pairs2.append('line')
+                // d3-selection selection.on
                 .on('mouseover', function(d) {
-                    console.log('hover');
-                    console.log(d3.select(this));
-                    d3.select(this).style('stroke','red');
-                    ticked();
+                    if (mouseEvent != 'Drag') {
+                        console.log('hover');
+                        console.log(d3.select(this));
+                        d3.select(this).style('stroke','#D46D6A');
+                        //ticked(); // Why was this here in the first place
+                    }
                 })
                 .on('mouseout', function(d) {
-                    d3.select(this).style('stroke','blue');
-                    ticked();
+                    if (mouseEvent != 'Drag') {
+                        d3.select(this).style('stroke', '#6F90A2' );
+                        //ticked();
+                    }
                 })
+                // d3-selection "selection.call"
+                // d3-drag "drag.on"
                 .call(d3.drag()
                        .on("start", dragstarted)
                        .on("drag", dragged)
                        .on("end", dragended));
+                console.log(pairs2.call(d3.drag()));
             pairs2.append('text')
                 .text(function(d) {return d.source});
 
@@ -249,13 +276,13 @@
                     //console.log(d);
                     return lengthScale(d.length);
                 })
-                .iterations(10); // Enforce the distance (adds runtime cost)
+                .iterations(40); // Enforce the distance (adds runtime cost)
 
            // Draw the contig adjacencies
             visual.force('link')
                 .links(d.contigLinks)
                 .distance(5)            // Also reduce the distance between adj edges
-                .iterations(5);         // Maybe add as a user setting
+                .iterations(10);         // Maybe add as a user setting
 
             /**
              * Specify forces between nodes to prevent them from stacking on each
@@ -280,7 +307,6 @@
             /*
              * Start the real-time visualisation
              */
-
 
             // Add transitions and update the svg elements
             //pairs.select('line').transition().duration(2000)
@@ -307,47 +333,143 @@
            // }); // End force.on anon function
         }
 
+        /**
+         * On every 'end' we run the folliowing.
+         * 'end' refers to the end of 
+         */
+        function end() {
+            /*
+             * Start the real-time visualisation
+             */
+
+
+            // Add transitions and update the svg elements
+            pairs.select('line').transition("drawpairs").duration(2000)
+                .attr('x1', function(d) { return d.source.x;})
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+
+            // Add transitions and update the svg elements
+            pairs.select('text').transition("drawtext").duration(2000)
+                .attr('x', function(d) { return (d.source.x + d.target.x)/2;})
+                .attr('y', function(d) { return (d.source.y + d.target.y)/2; });
+
+            // Add transitions and update the svg elements
+            links.select('line').transition('drawline').duration(2000)
+                .attr('x1', function(d) { return d.source.x; })
+                .attr('y1', function(d) { return d.source.y; })
+                .attr('x2', function(d) { return d.target.x; })
+                .attr('y2', function(d) { return d.target.y; });
+                    
+           // }); // End force.on anon function
+        }
+
+// Somehow dragstart prevents force layout from changing the position after
+//https://bl.ocks.org/mbostock/3750558
 function dragstarted(d) {
-  if (!d3.event.active) visual.alphaTarget(0.3).restart();
-    d.source.fx = d.source.x + (d3.event.x - ((d.source.x + d.target.x)/2));
-    d.source.fy = d.source.y + (d3.event.y - ((d.source.y + d.target.y)/2));
-    d.target.fx = d.target.x + (d3.event.x - ((d.source.x + d.target.x)/2));
-    d.target.fy = d.target.y + (d3.event.y - ((d.source.y + d.target.y)/2));
+    visual.on('tick', ticked);
+    visual.on('end', null);
+    mouseEvent = 'Drag';
+    timerRestart = 30;
+  if (!d3.event.active) visual.alphaTarget(0.0025).restart();
+  d3.select(this).style('stroke','#86C98A');
+    visual.on('tick', ticked);
+    visual.on('end', null);
+    console.log('dragstart');
+    console.log(d3.event.x);
+    console.log(d3.event.y);
+    console.log(d.source.x);
+    console.log(d.source.y);
+    console.log(d3.event.x - ((d.source.x + d.target.x)/2))
+    console.log(d3.event.y - ((d.source.y + d.target.y)/2))
+
+    // This for some reason does not work well at all.
+    //d.source.fx = d.source.x + (d3.event.x - ((d.source.x + d.target.x)/2));
+    //d.source.fy = d.source.y + (d3.event.y - ((d.source.y + d.target.y)/2));
+    //d.target.fx = d.target.x + (d3.event.x - ((d.source.x + d.target.x)/2));
+    //d.target.fy = d.target.y + (d3.event.y - ((d.source.y + d.target.y)/2));
+    
+    // Fix the x and y positions on click based on the current location.
+    d.source.fx = d.source.x;
+    d.source.fy = d.source.y;
+    d.target.fx = d.target.x;
+    d.target.fy = d.target.y;
 }
 
+// The handling of animations for these functions is still a bit of a hack
 function dragged(d) {
-  var offsetx = d3.event.x - ((d.source.x + d.target.x)/2)
-  var offsety = d3.event.y - ((d.source.y + d.target.y)/2)
-  d.source.fx = d.source.fx + offsetx;
-  d.source.fy = d.source.fy + offsety;
-  d.target.fx = d.target.fx  + offsetx;
-  d.target.fy = d.target.fy  + offsety;
-  
-  console.log('dragged');
+    d3.select(this).style('stroke','#86C98A');
+    // Center the node around the mouse pointer
+    // This causes jitter.
+    var offsetx = d3.event.x - ((d.source.x + d.target.x)/2);
+    var offsety = d3.event.y - ((d.source.y + d.target.y)/2);
+    console.log(offsetx);
+    d.source.fx = d.source.fx + offsetx;
+    d.source.fy = d.source.fy + offsety;
+    d.target.fx = d.target.fx + offsetx;
+    d.target.fy = d.target.fy + offsety;
+    console.log('dragged');
 }
 
+// The handling of animations for these functions is still a bit of a hack
 function dragended(d) {
+    // This causes bugs since mouseover/mouseout will trigger ticked() before
+    // the transitions in end() has completed.
+    visual.on('tick', null);
+    visual.on('end', end);
+    mouseEvent = 'Null';
+    
   if (!d3.event.active) visual.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
+  //d3.select(this).classed("fixed", d.fixed = false);
+    var offsetx = d3.event.x - ((d.source.x + d.target.x)/2)
+    var offsety = d3.event.y - ((d.source.y + d.target.y)/2)
+  console.log('dragended');
+  console.log(d3.select(this));
+
+  // Set to null so that d3.force can reposition the elements
+//  d.source.fx  = null;
+//  d.source.fy = null;
+//  d.target.fx  = null;
+//  d.target.fy = null;
+
+    d.source.fx = d.source.fx + offsetx;
+    d.source.fy = d.source.fy + offsety;
+    d.target.fx = d.target.fx + offsetx;
+    d.target.fy = d.target.fy + offsety;
+//  d.source.x  = d3.event.x;  // Set to null so that d3.force can reposition
+//  d.source.y = d3.event.y;
+  //d3.select(this).classed("fixed", d.fixed = false);
+  d3.select(this).style('stroke', '#6F90A2' );
 }
 
         </script>
         </div> <!--id=npDash-->
         <div class="controls">
-            <h1>Controls will go here</h1>
+            <h1>npDash</h1>
             <p class = "normal">
-                <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode
+                Layout controls.<br />
+                <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode. <br />
+                <input type="checkbox" id="chkbx2" onchange="handlechb()"/> Show node names.
             </p>
             <p class = "normal" id="timer">Next update in:</p>
         <script>
+            document.getElementById("chkbx1").checked = false;
+            document.getElementById("chkbx2").checked = false;
             // Handle the checkbox [HTML]
             function handlechb() {
                 var y = document.getElementById("chkbx1").checked;
+                var showNames = document.getElementById("chkbx2").checked;
                 console.log(y);
                 if (y==true) {
                     dynamic = 1;
                 }
+                if (showNames == true) {
+                    pairs2.select('text').style('display', 'block');
+                } else {
+                    pairs2.select('text').style('display', 'none');
+                }
+
             }
             //Countdown timer
             var x = setInterval(function() {
