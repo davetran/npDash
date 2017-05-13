@@ -1,0 +1,160 @@
+.visual {
+    background-color: #FFFFFF;
+}
+.pairs {
+    stroke: #F00;
+    stroke-width: 8px;
+    opacity: 0.9;
+}
+.pairs text {
+    font: 7px 'Open Sans', sans-serif;
+    stroke: darkgrey;
+    stroke-width: 0px;
+    opacity: 1.0;
+}
+.pairs2 {
+    stroke: #6F90A2;
+    stroke-width: 8px;
+    mix-blend-mode: multiply;
+}
+.pairs2 text {
+    display: none;
+    font: 8px sans-serif;
+    stroke: darkgrey;
+    stroke-width: 0px;
+    opacity: 1.0;
+}
+.links {
+    stroke: dimgray;
+    stroke-width: 1px;
+}
+.links2 {
+    stroke: #FFACAA;
+    stroke-width: 2px;
+    mix-blend-mode: multiply;
+}
+.node {
+    fill: #ccc;
+    stroke: #000;
+    stroke-width: 1.5px;
+    opacity: 0.2;
+}
+
+.node.fixed {
+    fill: #f00;
+}
+.nodeID text{
+    font: 7px 'Open Sans', sans-serif;
+    stroke: darkgrey;
+    stroke-width: 0px;
+    opacity: 1.0;
+}
+.controls {
+    display: block;
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    font: 7px sans-serif;
+    background-color: #EEEEEE;
+;
+    height:700px;
+    width:300px;
+    float:left;
+    margin-left:100px;
+    /*padding-left: 10px;*/
+}
+.visual {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid darkgrey;
+    float:left
+}
+p.normal {
+    font-family: 'Open Sans', sans-serif;
+    font-style: normal;
+    font-size: 14px;
+}
+div.showNodeNames {
+    position: relative;
+    color: #DDDDDD;
+    font-weight: 200;
+    font-size: 16px;
+    height: 25px;
+    width: 50px;
+    display: inline-block;
+    cursor: pointer;
+}
+div.showNodeNames p{
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+}
+div.hideNodeNames {
+    position: relative;
+    color: #86C98A;
+    font-weight: 700;
+    font-size: 16px;
+    height: 25px;
+    width: 50px;
+    display: inline-block;
+    cursor: pointer;
+}
+div.hideNodeNames p{
+    position: absolute;
+    margin: 0;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+}
+div.card {
+    position: block;
+    background-color: lightblue;
+    margin-top: 10px;
+    margin-right: 15px;
+    margin-bottom: 10px;
+    margin-left: 15px;
+}
+div.pageTitle {
+    font: 16px 'Open Sans', sans-serif;
+    font-weight: 800;
+}
+div.cardTitle {
+    font: 14px 'Open Sans', sans-serif;
+    font-weight: 600;
+    background-color: #0288D1;
+    padding-top: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    padding-left:5px;
+}
+div.cardLine {
+    background-color: #F5F5F5;
+}
+div.cardLineHeader {
+    background-color: #FFC107;
+    width: 80px;
+    font: 14px 'Open Sans', sans-serif;
+    display: block;
+    position: relative;
+    float: left;
+    padding-top: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    padding-left:5px;
+}
+div.cardLineContent {
+    font: 14px 'Open Sans', sans-serif;
+    text-align: center;
+    padding-top: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    padding-left:5px;
+}
+body {
+    min-width: 1366px;
+}

@@ -6,74 +6,107 @@
         <script type="text/javascript" src="d3.min.js"></script>  <!--Local copy-->
         <!--<script src="https://d3js.org/d3.v4.min.js"></script> sDirect link -->
         <!-- http://paletton.com/palette.php?uid=7010D0kllllaFw0g0qFqFg0w0aF -->
-        <style>
-            .visual {
-                background-color: #FFFFFF;
-            }
-            .pairs {
-               stroke: #F00;
-               stroke-width: 8px;
-               opacity: 0.9;
-            }
-            .pairs text {
-               font: 7px 'Open Sans', sans-serif;
-               stroke: darkgrey;
-               stroke-width: 0px;
-               opacity: 1.0;
-            }
-            .pairs2 {
-               stroke: #6F90A2;
-               stroke-width: 8px;
-               mix-blend-mode: multiply;
-            }
-            .pairs2 text {
-               display: none;
-               font: 8px sans-serif;
-               stroke: darkgrey;
-               stroke-width: 0px;
-               opacity: 1.0;
-            }
-            .links {
-               stroke: dimgray;
-               stroke-width: 1px;
-            }
-            .links2 {
-               stroke: #FFACAA;
-               stroke-width: 2px;
-               mix-blend-mode: multiply;
-            }
-            .node {
-              fill: #ccc;
-              stroke: #000;
-              stroke-width: 1.5px;
-              opacity: 0.2;
-            }
-          
-            .node.fixed {
-                fill: #f00;
-            }
-            .controls {
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-                font: 7px sans-serif;
-                background-color:lavenderblush;
-                width:800px;
-            }
-            .visual {
-                display: block;
-                margin-left: auto;
-                margin-right: auto;
-                border: 1px solid darkgrey;
-            }
-            p.normal {
-                font-family: 'Open Sans', sans-serif;
-                font-style: normal;
-                font-size: 14px;
-            }
-        </style>
+        <link rel="stylesheet" href="styles.css">
     </head>
 <body>
+    <!-- npDash-->
+    <div class="controls">
+        <div class = 'card'>
+            <div class = 'cardTitle' style='font-size: 18px'>npDash</div>
+        </div>
+        <div class = 'card'>
+            <div class = 'cardTitle'>Contig Details</div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Name: </div>
+                <div class = 'cardLineContent' id='cName'> --- </div>
+            </div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Length: </div>
+                <div class = 'cardLineContent' id='cLength'> --- </div>
+            </div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Coverage: </div>
+                <div class = 'cardLineContent' id='cCoverage'> --- </div>
+            </div>
+        </div>
+        <p class = "normal">
+            Layout controls.<br />
+            <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode. <br />
+            <input type="checkbox" id="chkbx2" onchange="handlechb()"/> Show node names.
+        </p>
+        <div class = 'nodeTextOption' style="font-size: 18px">Node Names</div>
+        <div class = 'showNodeNames'>
+            <p>Show</p>
+        </div>
+        <div class = 'hideNodeNames'>
+            <p>Hide</p>
+        </div>
+        <div class = 'visualSettings' style="font-size: 18px">Visual Settings</div>
+        <p class = "normal" id="timer">Next update in:</p>
+    <script>
+        document.getElementById("chkbx1").checked = false;
+        document.getElementById("chkbx2").checked = false;
+
+        // Hide node names button text thing.
+        d3.selectAll('div.hideNodeNames')
+            .on('click', function(d) {
+
+                // Update the view
+                d3.select('div.hideNodeNames')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                d3.select('div.showNodeNames p')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+
+                pairs2.select('text').style('display', 'none');
+                
+                console.log(d3.select(this));
+        });
+        d3.selectAll('div.showNodeNames')
+            .on('click', function(d) {
+                //d3.select(this).style('font-size','40');
+
+                d3.select('div.hideNodeNames')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+                d3.select('div.showNodeNames p')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                pairs2.select('text').style('display', 'block');
+                
+                //ticked(); // Why was this here in the first place
+                console.log(d3.select(this));
+        });
+
+        // Handle the checkbox [HTML]
+        function handlechb() {
+            var y = document.getElementById("chkbx1").checked;
+            var showNames = document.getElementById("chkbx2").checked;
+            console.log(y);
+            if (y==true) {
+                dynamic = 1;
+            }
+            if (showNames == true) {
+                pairs2.select('text').style('display', 'block');
+            } else {
+                pairs2.select('text').style('display', 'none');
+            }
+
+        }
+        //Countdown timer
+        var x = setInterval(function() {
+            if (seconds == 0 ) {
+                document.getElementById("timer").innerHTML = "Next update in : Waiting";
+            }
+            else {
+                seconds = seconds - 1;
+                document.getElementById("timer").innerHTML = "Next update in: " + seconds;
+            }
+        }, 1000);
+    </script>
+    </div><!--id=control-->
+
     <div id="visual">
     <script>
         /**
@@ -100,7 +133,7 @@
 
         /* Set the SVG canvas size */
         var width = 800,
-            height = 600;
+            height = 700;
 
         /* Specify the SVG canvas */
         var svg = d3.select('body').append('svg')
@@ -118,7 +151,7 @@
             .force("x", d3.forceX())
             .force("y", d3.forceY())
             .on('tick', null)   // Set the callback as null. This will change when we drag
-            .on('end', end); // 'end'
+            .on('end', function() {end(0)}); // 'end'
             //.force("collision", d3.forceCollide(2));
         
         visual.stop();
@@ -127,6 +160,18 @@
         var node = svg.selectAll('.node');
         var pairs = svg.selectAll('.pairs');
         var links = svg.selectAll('.links');
+
+        var nodeName = svg.append('g')
+        var currentID = 'None';
+
+        nodeName.attr('class', 'nodeID')
+                .attr('x', 50)
+                .attr('y', 50);
+        
+        nodeName.append('text')
+                .text(function(d) {return currentID})
+                .attr('x', 50)
+                .attr('y', 50);
 
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
@@ -149,8 +194,9 @@
             } 
             /* Real-time */
             if (dynamic == 1 ) {
+                visual.on('end', end);
                 ///* Read the JSON file located in the same directory */
-                d3.json("assembly.json", function(error, d) {
+                d3.json("data.json", function(error, d) {
                 
                 if (error) throw error;
 
@@ -172,7 +218,6 @@
          * See: https://bost.ocks.org/mike/join/
          */
         function update(d) {
-
             /* Updates the nodes */
             // Bind the data stored in the JSON nodes object.
             node = node.data(d.nodes, function(d) {return d.id; });
@@ -205,19 +250,21 @@
             // This group elements will allow for text labels.
             // d3.force will assign this group x-y coordinates.
             pairs2 = pairs.enter().append('g')
-                .attr('class', 'pairs2'); // Refactor to contigs?
+                .attr('class', 'pairs2')
+                .attr('length', function(d) {d.length}); // Refactor to contigs?
 
             // Append the line and text properties to the group elements.
             pairs2.append('line')
                 // d3-selection selection.on
-                .on('mouseover', function(d) {
-                    if (mouseEvent != 'Drag') {
-                        console.log('hover');
-                        console.log(d3.select(this));
-                        d3.select(this).style('stroke','#D46D6A');
+                //.on('mouseover', function(d) {
+                //    if (mouseEvent != 'Drag') {
+                //        console.log('hover');
+                //        console.log(d3.select(this));
+                //        d3.select(this).style('stroke','#D46D6A');
                         //ticked(); // Why was this here in the first place
-                    }
-                })
+                //    }
+                .attr('value', function(d) {d.length})
+                .on('mouseover', mouseOver)
                 .on('mouseout', function(d) {
                     if (mouseEvent != 'Drag') {
                         d3.select(this).style('stroke', '#6F90A2' );
@@ -231,8 +278,13 @@
                        .on("drag", dragged)
                        .on("end", dragended));
                 console.log(pairs2.call(d3.drag()));
+            // Appending data here for mouseover retrieval
             pairs2.append('text')
                 .text(function(d) {return d.source});
+            pairs2.append('length')
+                .text(function(d) {return d.length});
+            pairs2.append('coverage')
+                .text(function(d) {return d.coverage});
 
             
             // Merge the new pairs into the main pair selection
@@ -244,7 +296,7 @@
                 .domain([0, d3.max(d.contigData, function(d) {
                     return d.length;
                 })])
-                .range([0,256]); // Range 0 - 250 px
+                .range([5,256]); // Range 5 - 250 px
 
             /* Select and join the contig adjacencies */
             // Bind the data
@@ -337,26 +389,25 @@
          * On every 'end' we run the folliowing.
          * 'end' refers to the end of 
          */
-        function end() {
+        function end(transitionTime) {
             /*
              * Start the real-time visualisation
              */
 
-
             // Add transitions and update the svg elements
-            pairs.select('line').transition("drawpairs").duration(2000)
+            pairs.select('line').transition("drawpairs").duration(transitionTime)
                 .attr('x1', function(d) { return d.source.x;})
                 .attr('y1', function(d) { return d.source.y; })
                 .attr('x2', function(d) { return d.target.x; })
                 .attr('y2', function(d) { return d.target.y; });
 
             // Add transitions and update the svg elements
-            pairs.select('text').transition("drawtext").duration(2000)
+            pairs.select('text').transition("drawtext").duration(transitionTime)
                 .attr('x', function(d) { return (d.source.x + d.target.x)/2;})
                 .attr('y', function(d) { return (d.source.y + d.target.y)/2; });
 
             // Add transitions and update the svg elements
-            links.select('line').transition('drawline').duration(2000)
+            links.select('line').transition('drawline').duration(transitionTime)
                 .attr('x1', function(d) { return d.source.x; })
                 .attr('y1', function(d) { return d.source.y; })
                 .attr('x2', function(d) { return d.target.x; })
@@ -364,6 +415,20 @@
                     
            // }); // End force.on anon function
         }
+
+function mouseOver(d) {
+    if (mouseEvent != 'Drag') {
+        console.log('hover');
+        console.log(d3.select(this));
+        //console.log(d3.select(this).select('text').text(function(d) {return d.source}));
+        console.log(d3.select(this.parentNode).text());
+        d3.select(this).style('stroke','#50446d');
+        //ticked(); // Why was this here in the first place
+        document.getElementById("cName").innerHTML = d3.select(this.parentNode).select('text').text()
+        document.getElementById("cLength").innerHTML = d3.select(this.parentNode).select('length').text() + ' bp'
+        document.getElementById("cCoverage").innerHTML = d3.select(this.parentNode).select('coverage').text()
+    }
+}
 
 // Somehow dragstart prevents force layout from changing the position after
 //https://bl.ocks.org/mbostock/3750558
@@ -417,7 +482,7 @@ function dragended(d) {
     // This causes bugs since mouseover/mouseout will trigger ticked() before
     // the transitions in end() has completed.
     visual.on('tick', null);
-    visual.on('end', end);
+    visual.on('end', end(2000));
     mouseEvent = 'Null';
     
   if (!d3.event.active) visual.alphaTarget(0);
@@ -441,47 +506,12 @@ function dragended(d) {
 //  d.source.y = d3.event.y;
   //d3.select(this).classed("fixed", d.fixed = false);
   d3.select(this).style('stroke', '#6F90A2' );
-}
+} // dragended(d)
 
+function getTransitionTime() {
+    return 2000;
+}
         </script>
         </div> <!--id=npDash-->
-        <div class="controls">
-            <h1>npDash</h1>
-            <p class = "normal">
-                Layout controls.<br />
-                <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode. <br />
-                <input type="checkbox" id="chkbx2" onchange="handlechb()"/> Show node names.
-            </p>
-            <p class = "normal" id="timer">Next update in:</p>
-        <script>
-            document.getElementById("chkbx1").checked = false;
-            document.getElementById("chkbx2").checked = false;
-            // Handle the checkbox [HTML]
-            function handlechb() {
-                var y = document.getElementById("chkbx1").checked;
-                var showNames = document.getElementById("chkbx2").checked;
-                console.log(y);
-                if (y==true) {
-                    dynamic = 1;
-                }
-                if (showNames == true) {
-                    pairs2.select('text').style('display', 'block');
-                } else {
-                    pairs2.select('text').style('display', 'none');
-                }
-
-            }
-            //Countdown timer
-            var x = setInterval(function() {
-                if (seconds == 0 ) {
-                    document.getElementById("timer").innerHTML = "Next update in : Waiting";
-                }
-                else {
-                    seconds = seconds - 1;
-                    document.getElementById("timer").innerHTML = "Next update in: " + seconds;
-                }
-            }, 1000);
-        </script>
-        </div><!--id=control-->
     </body>
 </html>
