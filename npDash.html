@@ -187,27 +187,8 @@
         /* This block of code will continuously operate to provide real-time functionality 
          * using the javascript method setInterval().
          */
-        setInterval(function() {
-            /* Static mode */
-            if (dynamic == 0 ) {
-                document.getElementById("timer").innerHTML = "Static mode"; // does not work?
-            } 
-            /* Real-time */
-            if (dynamic == 1 ) {
-                visual.on('end', end);
-                ///* Read the JSON file located in the same directory */
-                d3.json("data.json", function(error, d) {
-                
-                if (error) throw error;
-
-                /* Update the data using the JSON */
-                update(d);
-                /* Re-energise the simulation */
-                visual.alpha(1).restart();
-                seconds = 10; // Not timer not accurate due to 'end' update oddness.
-
-                }); // End d3.json read
-            }
+        var updater = setInterval(function() {
+            dynamicUpdate();
         }, 10000); // Refresh once every 30 seconds
 
         /**
@@ -223,7 +204,7 @@
             node = node.data(d.nodes, function(d) {return d.id; });
             
             // Remove nodes with no data associated
-            node.exit().remove();
+            node.exit().remove().transition().duration(1000);
 
             // Build the elements for the new nodes
             var node2 = node.enter().append('g')
@@ -244,7 +225,14 @@
                 pairs.attr('class', 'pairs');
             }
             // Perform the exit() operation
-            pairs.exit().remove();
+            pairs.exit()
+                 .attr('class', 'pairs')
+                 .transition()
+                 .attr("y", 60)
+                 .duration(1000)
+                 .style('stroke', '##c85951')
+                 .remove();
+            console.log('Removed')
 
             // For each new contig define a new group <g> svg element. 
             // This group elements will allow for text labels.
@@ -308,7 +296,11 @@
                 links.attr('class', 'links');
             }
             // Remove the links with no data
-            links.exit().remove();
+            links.exit()
+                 .transition()
+                 .duration(1000)
+                 .style("fill-opacity", 1e-6)
+                 .remove();
 
             // For each new contig define a new svg element
             var links2 = links.enter().append('g')
@@ -510,6 +502,38 @@ function dragended(d) {
 
 function getTransitionTime() {
     return 2000;
+}
+
+function dynamicUpdate() {
+     /* Static mode */
+    if (dynamic == 0 ) {
+        document.getElementById("timer").innerHTML = "Static mode"; // does not work?
+    } 
+    /* Real-time */
+    if (dynamic == 1 ) {
+        visual.on('end', function() {end(2000)});
+        ///* Read the JSON file located in the same directory */
+        d3.json("data.json", function(error, d) {
+        
+        if (error) throw error;
+
+        /* Update the data using the JSON */
+        update(d);
+        /* Re-energise the simulation */
+        visual.alpha(1).restart();
+        seconds = 10; // Not timer not accurate due to 'end' update oddness.
+
+        }); // End d3.json read
+    }
+}
+
+
+function stopUpdates() {
+    clearInterval(updater);
+}
+
+function startUpdates() {
+    clearInterval(updater);
 }
         </script>
         </div> <!--id=npDash-->
