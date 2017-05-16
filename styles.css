@@ -2,18 +2,19 @@
     background-color: #FFFFFF;
 }
 .pairs {
-    stroke: #F00;
+    stroke: #6F90A2;;
     stroke-width: 8px;
-    opacity: 0.9;
+    mix-blend-mode: multiply;
 }
 .pairs text {
+    display: none;
     font: 7px 'Open Sans', sans-serif;
     stroke: darkgrey;
     stroke-width: 0px;
     opacity: 1.0;
 }
 .pairs2 {
-    stroke: #6F90A2;
+    stroke: #86C98A;
     stroke-width: 8px;
     mix-blend-mode: multiply;
 }
@@ -25,12 +26,13 @@
     opacity: 1.0;
 }
 .links {
-    stroke: dimgray;
+    stroke: #616161;
     stroke-width: 1px;
+    mix-blend-mode: multiply;
 }
 .links2 {
-    stroke: #FFACAA;
-    stroke-width: 2px;
+    stroke: #616161;
+    stroke-width: 1px;
     mix-blend-mode: multiply;
 }
 .node {
@@ -126,7 +128,7 @@ div.pageTitle {
 div.cardTitle {
     font: 14px 'Open Sans', sans-serif;
     font-weight: 600;
-    background-color: #0288D1;
+    background-color: #78909C;
     padding-top: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
@@ -136,7 +138,7 @@ div.cardLine {
     background-color: #F5F5F5;
 }
 div.cardLineHeader {
-    background-color: #FFC107;
+    background-color: #E0E0E0;
     width: 80px;
     font: 14px 'Open Sans', sans-serif;
     display: block;
@@ -150,10 +152,34 @@ div.cardLineHeader {
 div.cardLineContent {
     font: 14px 'Open Sans', sans-serif;
     text-align: center;
+    height: 19px;
     padding-top: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
     padding-left:5px;
+}
+div.cardLineButtons {
+    font: 14px 'Open Sans', sans-serif;
+    text-align: center;
+    height: 19px;
+    padding-top: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    padding-left:5px;
+}
+div.toggleButton {
+    background-color: #EEEEEE;
+    width: 75px;
+    font: 14px 'Open Sans', sans-serif;
+    font-weight: 700;
+    display: block;
+    position: relative;
+    float: left;
+    padding-top: 5px;
+    padding-right: 5px;
+    padding-bottom: 5px;
+    padding-left:5px;
+    cursor: pointer;
 }
 body {
     min-width: 1366px;

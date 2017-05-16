@@ -29,23 +29,98 @@
                 <div class = 'cardLineContent' id='cCoverage'> --- </div>
             </div>
         </div>
-        <p class = "normal">
-            Layout controls.<br />
-            <input type="checkbox" id="chkbx1" onchange="handlechb()"/> Real-time mode. <br />
-            <input type="checkbox" id="chkbx2" onchange="handlechb()"/> Show node names.
-        </p>
-        <div class = 'nodeTextOption' style="font-size: 18px">Node Names</div>
-        <div class = 'showNodeNames'>
-            <p>Show</p>
+        <div class = 'card'>
+            <div class = 'cardTitle'>Layout controls</div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Mode: </div>
+                    <div class = 'toggleButton' id = 'RealT'> Real-time</div>
+                    <div class = 'toggleButton' id = 'Static'> Static</div>
+            </div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Node ID: </div>
+                    <div class = 'toggleButton' id = 'Show'> Show</div>
+                    <div class = 'toggleButton' id = 'Hide'> Hide</div>
+            </div>
         </div>
-        <div class = 'hideNodeNames'>
-            <p>Hide</p>
-        </div>
-        <div class = 'visualSettings' style="font-size: 18px">Visual Settings</div>
         <p class = "normal" id="timer">Next update in:</p>
+
     <script>
-        document.getElementById("chkbx1").checked = false;
-        document.getElementById("chkbx2").checked = false;
+        
+    // Set default style
+    d3.select('#Hide')
+        .style('color','#86C98A')
+        .style('font-weight', '700');
+    d3.select('#Show')
+        .style('color','#DDDDDD')
+        .style('font-weight', '200');
+    d3.select('#RealT')
+        .style('color','#DDDDDD')
+        .style('font-weight', '200');
+    d3.select('#Static')
+        .style('color','#86C98A')
+        .style('font-weight', '700');
+
+        // Mode toggle button.
+        d3.selectAll('#RealT')
+            .on('click', function(d) {
+                console.log('Responding')
+
+                dynamic = 1;
+                // Update the view
+                d3.select('#RealT')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                d3.select('#Static')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+        });
+        d3.selectAll('#Static')
+            .on('click', function(d) {
+                console.log('Responding')
+
+                dynamic = 0;
+                // Update the view
+                d3.select('#RealT')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+                d3.select('#Static')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+        });
+
+        // Hide node names button text thing.
+        d3.selectAll('#Hide')
+            .on('click', function(d) {
+                console.log('Responding')
+
+                // Update the view
+                d3.select('#Hide')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                d3.select('#Show')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+
+                pairs.select('text').style('display', 'none');
+                pairs2.select('text').style('display', 'none');
+        });
+
+        d3.selectAll('#Show')
+            .on('click', function(d) {
+
+                // Update the view
+                d3.select('#Hide')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+                d3.select('#Show')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                pairs.select('text').style('display', 'block');
+                pairs2.select('text').style('display', 'block');
+                
+                //ticked(); // Why was this here in the first place
+                console.log(d3.select(this));
+        });
 
         // Hide node names button text thing.
         d3.selectAll('div.hideNodeNames')
@@ -59,6 +134,7 @@
                     .style('color','#DDDDDD')
                     .style('font-weight', '200');
 
+                pairs.select('text').style('display', 'none');
                 pairs2.select('text').style('display', 'none');
                 
                 console.log(d3.select(this));
@@ -73,27 +149,13 @@
                 d3.select('div.showNodeNames p')
                     .style('color','#86C98A')
                     .style('font-weight', '700');
+                pairs.select('text').style('display', 'block');
                 pairs2.select('text').style('display', 'block');
                 
                 //ticked(); // Why was this here in the first place
                 console.log(d3.select(this));
         });
 
-        // Handle the checkbox [HTML]
-        function handlechb() {
-            var y = document.getElementById("chkbx1").checked;
-            var showNames = document.getElementById("chkbx2").checked;
-            console.log(y);
-            if (y==true) {
-                dynamic = 1;
-            }
-            if (showNames == true) {
-                pairs2.select('text').style('display', 'block');
-            } else {
-                pairs2.select('text').style('display', 'none');
-            }
-
-        }
         //Countdown timer
         var x = setInterval(function() {
             if (seconds == 0 ) {
@@ -104,6 +166,7 @@
                 document.getElementById("timer").innerHTML = "Next update in: " + seconds;
             }
         }, 1000);
+
     </script>
     </div><!--id=control-->
 
@@ -116,11 +179,24 @@
         
         /* Variable to set the visualisation to reload data */
         var dynamic = 0;
+        var clock = 0;
+
+        var offsetsx = 0;
+        var offsetsy = 0;
+        var offsettx = 0;
+        var offsetty = 0;
+
+        var uiIdleTimer = null;
+
         // Seconds for timer
         var seconds = 10;
         var mouseEvent = 'Null';
 
         var timerRestart = 0;
+
+        // Create a clock
+        setInterval(incrementClock,1000);
+
         var dragTimer = setInterval(function() {
             if (timerRestart == 0 ) {
                     // Do nothing.
@@ -162,16 +238,16 @@
         var links = svg.selectAll('.links');
 
         var nodeName = svg.append('g')
-        var currentID = 'None';
+        var currentID = 'Placeholder details';
 
         nodeName.attr('class', 'nodeID')
-                .attr('x', 50)
-                .attr('y', 50);
+                .attr('x', 00)
+                .attr('y', 680);
         
         nodeName.append('text')
                 .text(function(d) {return currentID})
-                .attr('x', 50)
-                .attr('y', 50);
+                .attr('x', 5)
+                .attr('y', 695);
 
         /* Read the JSON file located in the same directory */
         d3.json("assembly.json", function(error, d) {
@@ -199,6 +275,7 @@
          * See: https://bost.ocks.org/mike/join/
          */
         function update(d) {
+            console.log('Updating')
             /* Updates the nodes */
             // Bind the data stored in the JSON nodes object.
             node = node.data(d.nodes, function(d) {return d.id; });
@@ -255,7 +332,7 @@
                 .on('mouseover', mouseOver)
                 .on('mouseout', function(d) {
                     if (mouseEvent != 'Drag') {
-                        d3.select(this).style('stroke', '#6F90A2' );
+                        d3.select(this).style('stroke', '' );
                         //ticked();
                     }
                 })
@@ -274,7 +351,6 @@
             pairs2.append('coverage')
                 .text(function(d) {return d.coverage});
 
-            
             // Merge the new pairs into the main pair selection
             pairs = pairs.merge(pairs2);
 
@@ -414,7 +490,8 @@ function mouseOver(d) {
         console.log(d3.select(this));
         //console.log(d3.select(this).select('text').text(function(d) {return d.source}));
         console.log(d3.select(this.parentNode).text());
-        d3.select(this).style('stroke','#50446d');
+        //d3.select(this).style('stroke','#50446d');
+        d3.select(this).style('stroke','#D46D6A');
         //ticked(); // Why was this here in the first place
         document.getElementById("cName").innerHTML = d3.select(this.parentNode).select('text').text()
         document.getElementById("cLength").innerHTML = d3.select(this.parentNode).select('length').text() + ' bp'
@@ -425,12 +502,12 @@ function mouseOver(d) {
 // Somehow dragstart prevents force layout from changing the position after
 //https://bl.ocks.org/mbostock/3750558
 function dragstarted(d) {
-    visual.on('tick', ticked);
-    visual.on('end', null);
     mouseEvent = 'Drag';
     timerRestart = 30;
+    stopUpdates();
+    stopAnimation();
   if (!d3.event.active) visual.alphaTarget(0.0025).restart();
-  d3.select(this).style('stroke','#86C98A');
+  d3.select(this).style('stroke','#D46D6A');
     visual.on('tick', ticked);
     visual.on('end', null);
     console.log('dragstart');
@@ -441,31 +518,32 @@ function dragstarted(d) {
     console.log(d3.event.x - ((d.source.x + d.target.x)/2))
     console.log(d3.event.y - ((d.source.y + d.target.y)/2))
 
-    // This for some reason does not work well at all.
-    //d.source.fx = d.source.x + (d3.event.x - ((d.source.x + d.target.x)/2));
-    //d.source.fy = d.source.y + (d3.event.y - ((d.source.y + d.target.y)/2));
-    //d.target.fx = d.target.x + (d3.event.x - ((d.source.x + d.target.x)/2));
-    //d.target.fy = d.target.y + (d3.event.y - ((d.source.y + d.target.y)/2));
-    
-    // Fix the x and y positions on click based on the current location.
+    // Calculate the offset between the click location and the two end-points.
+    // This will be used to offset the end-point locations in the dragged()
+    // callback.
+    offsetsx = d3.event.x - d.source.x;
+    offsetsy = d3.event.y - d.source.y;
+    offsettx = d3.event.x - d.target.x;
+    offsetty = d3.event.y - d.target.y;
+
+    // Fix the endpoint for user interaction.
     d.source.fx = d.source.x;
     d.source.fy = d.source.y;
     d.target.fx = d.target.x;
     d.target.fy = d.target.y;
 }
 
-// The handling of animations for these functions is still a bit of a hack
+/**
+ * Callback function for when the mouse is dragged on a 'contig'.
+ * Notes: Calculate the offsets at dragstarted() then apply them here.
+ * Any positional offset calculations done here may cause some funky jitter.
+ */
 function dragged(d) {
-    d3.select(this).style('stroke','#86C98A');
-    // Center the node around the mouse pointer
-    // This causes jitter.
-    var offsetx = d3.event.x - ((d.source.x + d.target.x)/2);
-    var offsety = d3.event.y - ((d.source.y + d.target.y)/2);
-    console.log(offsetx);
-    d.source.fx = d.source.fx + offsetx;
-    d.source.fy = d.source.fy + offsety;
-    d.target.fx = d.target.fx + offsetx;
-    d.target.fy = d.target.fy + offsety;
+    d3.select(this).style('stroke','#D46D6A');
+    d.source.fx = d3.event.x - offsetsx;
+    d.source.fy = d3.event.y - offsetsy;
+    d.target.fx = d3.event.x - offsettx;
+    d.target.fy = d3.event.y - offsetty;
     console.log('dragged');
 }
 
@@ -473,31 +551,27 @@ function dragged(d) {
 function dragended(d) {
     // This causes bugs since mouseover/mouseout will trigger ticked() before
     // the transitions in end() has completed.
-    visual.on('tick', null);
-    visual.on('end', end(2000));
+    //visual.on('tick', null);
+    //visual.on('end', end(2000));
     mouseEvent = 'Null';
     
   if (!d3.event.active) visual.alphaTarget(0);
   //d3.select(this).classed("fixed", d.fixed = false);
     var offsetx = d3.event.x - ((d.source.x + d.target.x)/2)
     var offsety = d3.event.y - ((d.source.y + d.target.y)/2)
-  console.log('dragended');
-  console.log(d3.select(this));
+    console.log('dragended');
+    console.log(d3.select(this));
 
-  // Set to null so that d3.force can reposition the elements
-//  d.source.fx  = null;
-//  d.source.fy = null;
-//  d.target.fx  = null;
-//  d.target.fy = null;
+    // Set to null so that d3.force can reposition the elements
+    d.source.fx  = null;
+    d.source.fy = null;
+    d.target.fx  = null;
+    d.target.fy = null;
 
-    d.source.fx = d.source.fx + offsetx;
-    d.source.fy = d.source.fy + offsety;
-    d.target.fx = d.target.fx + offsetx;
-    d.target.fy = d.target.fy + offsety;
-//  d.source.x  = d3.event.x;  // Set to null so that d3.force can reposition
-//  d.source.y = d3.event.y;
   //d3.select(this).classed("fixed", d.fixed = false);
   d3.select(this).style('stroke', '#6F90A2' );
+  startAnimation(d);
+  startUpdates();
 } // dragended(d)
 
 function getTransitionTime() {
@@ -505,15 +579,17 @@ function getTransitionTime() {
 }
 
 function dynamicUpdate() {
+    console.log('Running');
      /* Static mode */
     if (dynamic == 0 ) {
         document.getElementById("timer").innerHTML = "Static mode"; // does not work?
     } 
     /* Real-time */
     if (dynamic == 1 ) {
+        visual.on('tick', null);
         visual.on('end', function() {end(2000)});
         ///* Read the JSON file located in the same directory */
-        d3.json("data.json", function(error, d) {
+        d3.json("assembly.json", function(error, d) {
         
         if (error) throw error;
 
@@ -527,13 +603,34 @@ function dynamicUpdate() {
     }
 }
 
+function startAnimation(d) {
+    console.log('Transitions reset.');
+    uiIdleTimer = setTimeout(function() {
+        visual.on('tick', null);
+        visual.on('end', function() {end(2000)});
+        //update(d);
+        visual.alpha(1).restart();
+        console.log('Transitions readded.');
+    },10000);
+}
+
+function stopAnimation() {
+    console.log('clearTimeout.');
+    clearTimeout(uiIdleTimer);
+}
 
 function stopUpdates() {
     clearInterval(updater);
 }
 
 function startUpdates() {
-    clearInterval(updater);
+    console.log('restart sim.');
+    updater = setInterval(function() {dynamicUpdate()},10000);
+}
+
+function incrementClock() {
+    clock = clock + 1;
+    console.log(clock);
 }
         </script>
         </div> <!--id=npDash-->
