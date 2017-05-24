@@ -9,6 +9,7 @@
         <link rel="stylesheet" href="styles.css">
     </head>
 <body>
+    <div class="content">
     <!-- npDash-->
     <div class="controls">
         <div class = 'card'>
@@ -41,8 +42,24 @@
                     <div class = 'toggleButton' id = 'Show'> Show</div>
                     <div class = 'toggleButton' id = 'Hide'> Hide</div>
             </div>
+            <div class = 'cardLine'>
+                <div class = 'cardLineHeader'> Reset View : </div>
+                    <div class = 'toggleButton' id = 'Reset'> Reset</div>
+                    <div class = 'toggleButton' id = 'Reset'> Reset</div>
+            </div>
         </div>
-        <p class = "normal" id="timer">Next update in:</p>
+        <div class = 'card'>
+            <div class = 'cardTitle'>BLAST</div>
+                <form action = "UploadServlet" method = "post"
+                    enctype = "multipart/form-data">
+                    <label class="custom-file-upload"> Select File
+                        <input type = "file"/>
+                    </label>
+                    <label class="custom-file-upload"> Upload
+                        <input type = "submit"/>
+                    </label>
+                </form>
+            </div>
 
     <script>
         
@@ -121,6 +138,11 @@
                 //ticked(); // Why was this here in the first place
                 console.log(d3.select(this));
         });
+        d3.selectAll('#Reset')
+            .on('click', function(d) {
+                // Update the view
+                svg.call(zoom.transform, d3.zoomIdentity);
+        });
 
         // Hide node names button text thing.
         d3.selectAll('div.hideNodeNames')
@@ -156,21 +178,28 @@
                 console.log(d3.select(this));
         });
 
-        //Countdown timer
-        var x = setInterval(function() {
-            if (seconds == 0 ) {
-                document.getElementById("timer").innerHTML = "Next update in : Waiting";
-            }
-            else {
-                seconds = seconds - 1;
-                document.getElementById("timer").innerHTML = "Next update in: " + seconds;
-            }
-        }, 1000);
+        d3.selectAll('#UploadFile')
+            .on('click', function(d) {
+
+                // Update the view
+                d3.select('#Hide')
+                    .style('color','#DDDDDD')
+                    .style('font-weight', '200');
+                d3.select('#Show')
+                    .style('color','#86C98A')
+                    .style('font-weight', '700');
+                pairs.select('text').style('display', 'block');
+                pairs2.select('text').style('display', 'block');
+                
+                //ticked(); // Why was this here in the first place
+                console.log(d3.select(this));
+        });
+        
 
     </script>
     </div><!--id=control-->
 
-    <div id="visual">
+    <div class='visual' id="visual">
     <script>
         /**
          *  Date: 13-MAR-2017
@@ -208,14 +237,37 @@
 
 
         /* Set the SVG canvas size */
-        var width = 800,
+        var width = 900,
             height = 700;
 
         /* Specify the SVG canvas */
-        var svg = d3.select('body').append('svg')
+        var svg = d3.select('#visual').append('svg')
             .attr('width', width)
             .attr('height', height)
-            .attr('class','visual');
+            .attr('class','visual')
+            .call(zoom = d3.zoom().on("zoom", visZoom));
+
+
+        d3.select('#visual').select('svg').append("g");
+
+   // viewPort.call(zoom)
+ //   .on("wheel.zoom", null);
+
+        /* Zoom event handler*/
+        function visZoom() {
+            d3.select('#visual').select('svg').select('g').attr("transform", d3.event.transform)
+            console.log(zoom.filter());
+        }
+
+        // Loading dialog
+        statusDialog = svg.select('g').append('g')
+
+        statusDialog.attr('class', 'dialog')
+                    .attr('id', 'loadDialog')
+                    .append('text')
+                    .text('Initialising')
+                    .attr('x', 400)
+                    .attr('y', 350);
 
         /* Specify the forces that will be used by the visualisation */
         var visual = d3.forceSimulation()
@@ -233,9 +285,9 @@
         visual.stop();
 
         /* Selections */
-        var node = svg.selectAll('.node');
-        var pairs = svg.selectAll('.pairs');
-        var links = svg.selectAll('.links');
+        var node = svg.select('g').selectAll('.node');
+        var pairs = svg.select('g').selectAll('.pairs');
+        var links = svg.select('g').selectAll('.links');
 
         var nodeName = svg.append('g')
         var currentID = 'Placeholder details';
@@ -257,7 +309,6 @@
             update(d);
             /* Re-energise the simulation */
             visual.alpha(1).restart();
-
         }); // End d3.json read
 
         /* This block of code will continuously operate to provide real-time functionality 
@@ -301,6 +352,7 @@
             if (pairs.enter().size() != 0) {
                 pairs.attr('class', 'pairs');
             }
+
             // Perform the exit() operation
             pairs.exit()
                  .attr('class', 'pairs')
@@ -317,6 +369,13 @@
             pairs2 = pairs.enter().append('g')
                 .attr('class', 'pairs2')
                 .attr('length', function(d) {d.length}); // Refactor to contigs?
+
+            // When no new contigs are detected, then we will ensure
+            // that the colour for the new contigs are not changed
+            if (pairs.size() == 0) {
+                pairs2.attr('class', 'pairs');
+                console.log('Initial')
+            }
 
             // Append the line and text properties to the group elements.
             pairs2.append('line')
@@ -481,6 +540,11 @@
                 .attr('x2', function(d) { return d.target.x; })
                 .attr('y2', function(d) { return d.target.y; });
                     
+            if (typeof statusDialog !== 'undefined') {
+                // the variable is defined
+                d3.select("#loadDialog").remove();
+                console.log(statusDialog)
+            }
            // }); // End force.on anon function
         }
 
@@ -580,10 +644,6 @@ function getTransitionTime() {
 
 function dynamicUpdate() {
     console.log('Running');
-     /* Static mode */
-    if (dynamic == 0 ) {
-        document.getElementById("timer").innerHTML = "Static mode"; // does not work?
-    } 
     /* Real-time */
     if (dynamic == 1 ) {
         visual.on('tick', null);
@@ -634,5 +694,6 @@ function incrementClock() {
 }
         </script>
         </div> <!--id=npDash-->
+        </div><!-- Content div>-->
     </body>
 </html>

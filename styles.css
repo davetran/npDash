@@ -1,5 +1,29 @@
+html {
+    height:100%;
+    width:100%;
+    display:block;
+    position: fixed;
+    overflow:auto;
+}
+body {
+    height:auto;
+    width: 100%;
+    min-width: 1200px;
+    text-align: center;
+    display:block;
+    position: fixed;
+    overflow:auto;
+}
+.dialog text{
+    font: 27px 'Open Sans', sans-serif;
+    text-anchor: middle;
+    stroke: darkgrey;
+    stroke-width: 0px;
+    opacity: 1.0;
+    transform: translate(3100,300);
+}
 .visual {
-    background-color: #FFFFFF;
+    background-color: #FAFAFA;
 }
 .pairs {
     stroke: #6F90A2;;
@@ -54,28 +78,33 @@
 .controls {
     display: block;
     position: relative;
-    margin-left: auto;
-    margin-right: auto;
     font: 7px sans-serif;
+    height: 100%;
     background-color: #EEEEEE;
-;
     height:700px;
     width:300px;
     float:left;
-    margin-left:100px;
+    /*margin-left:100px;*/
     /*padding-left: 10px;*/
 }
 .visual {
     display: block;
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid darkgrey;
+    margin: auto;
+    /*border: 1px solid darkgrey;*/
     float:left
 }
 p.normal {
     font-family: 'Open Sans', sans-serif;
     font-style: normal;
     font-size: 14px;
+}
+div.content {
+    display: inline-block;
+    margin: 0 auto;
+    position: relative;
+    /*border: 1px solid #616161;*/
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    overflow:auto;
 }
 div.showNodeNames {
     position: relative;
@@ -114,12 +143,13 @@ div.hideNodeNames p{
     transform: translate(-50%, -50%);
 }
 div.card {
-    position: block;
+    display: block;
     background-color: lightblue;
     margin-top: 10px;
     margin-right: 15px;
     margin-bottom: 10px;
     margin-left: 15px;
+    overflow: auto;
 }
 div.pageTitle {
     font: 16px 'Open Sans', sans-serif;
@@ -134,8 +164,13 @@ div.cardTitle {
     padding-bottom: 5px;
     padding-left:5px;
 }
+div.visual {
+    display:block;
+    overflow: auto; 
+}
 div.cardLine {
     background-color: #F5F5F5;
+    overflow: auto; 
 }
 div.cardLineHeader {
     background-color: #E0E0E0;
@@ -181,6 +216,21 @@ div.toggleButton {
     padding-left:5px;
     cursor: pointer;
 }
-body {
-    min-width: 1366px;
+
+
+.custom-file-upload {
+    float: left;
+    width: 80px;
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 5px 5px;
+    font: 14px 'Open Sans', sans-serif;
+    font-weight: 400;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+
+input[type="file"],input[type=submit] {
+    display: none;
 }
