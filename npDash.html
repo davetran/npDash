@@ -4,6 +4,7 @@
     <head>
         <meta charset="UTF-8"> 
         <script type="text/javascript" src="d3.min.js"></script>  <!--Local copy-->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
         <!--<script src="https://d3js.org/d3.v4.min.js"></script> sDirect link -->
         <!-- http://paletton.com/palette.php?uid=7010D0kllllaFw0g0qFqFg0w0aF -->
         <link rel="stylesheet" href="styles.css">
@@ -12,9 +13,7 @@
     <div class="content">
     <!-- npDash-->
     <div class="controls">
-        <div class = 'card'>
-            <div class = 'cardTitle' style='font-size: 18px'>npDash</div>
-        </div>
+        <div class = 'contentHeader' style='font-size: 18px'>npDash</div>
         <div class = 'card'>
             <div class = 'cardTitle'>Contig Details</div>
             <div class = 'cardLine'>
@@ -44,25 +43,78 @@
             </div>
             <div class = 'cardLine'>
                 <div class = 'cardLineHeader'> Reset View : </div>
+                    <div class = 'toggleButton' id = 'GoRed'> Test</div>
                     <div class = 'toggleButton' id = 'Reset'> Reset</div>
-                    <div class = 'toggleButton' id = 'Reset'> Reset</div>
+                <div class = 'cardLineHeader'> BLAST: </div>
+                    <div class = 'toggleButton' id = 'bShow'> Show</div>
+                    <div class = 'toggleButton' id = 'bHide'> Hide</div>
             </div>
         </div>
         <div class = 'card'>
-            <div class = 'cardTitle'>BLAST</div>
-                <form action = "UploadServlet" method = "post"
-                    enctype = "multipart/form-data">
-                    <label class="custom-file-upload"> Select File
-                        <input type = "file"/>
-                    </label>
-                    <label class="custom-file-upload"> Upload
-                        <input type = "submit"/>
-                    </label>
-                </form>
+            <div class = 'cardTitle'>BLAST Search</div>
+                <div class = 'cardLine'>
+                    <div class = 'cardLineHeader' style= 'margin: 4px 2px'> FASTA File: </div>
+                    <form method = "post" enctype = "multipart/form-data" id="fileUpload">
+                        <label class="custom-file-upload"> Upload
+                            <input type = "submit" id="btnSubmit"/>
+                        </label>
+                        <label class="custom-file-upload"> Select File
+                            <input type = "file" name="filename"/>
+                        </label>
+                    </form>
+                </div>
+                <div class = 'cardLine'>
+                    <div class = 'cardLineHeader'> Result: </div>
+                    <div class = 'cardLineContent' id="result"> --- </div>
+                </div>
             </div>
 
     <script>
-        
+    //https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
+    //https://code.tutsplus.com/tutorials/uploading-files-with-ajax--net-21077
+    $(document).ready(function () {
+        $("#btnSubmit").click(function (event) {
+        //stop submit the form, we will post it manually.
+        event.preventDefault();
+
+        // Get form
+        var form = $('#fileUpload')[0];
+
+        // Create an FormData object
+        var data = new FormData(form);
+
+        // If you want to add an extra field for the FormData
+        data.append("CustomField", "This is some extra data, testing");
+
+        // disabled the submit button
+        $("#btnSubmit").prop("disabled", true);
+
+        $.ajax({
+            type: "POST",
+            enctype: 'multipart/form-data',
+            url: "/cgitest/cgi-bin/save_file.py",
+            data: data,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 600000,
+            // TODO: Function to handle the returning JSON.
+            success: function (data) {
+
+                $("#result").text(data);
+                console.log("SUCCESS : ", data);
+                $("#btnSubmit").prop("disabled", false);
+
+            },
+            error: function (e) {
+
+                $("#result").text(e.responseText);
+                console.log("ERROR : ", e);
+                $("#btnSubmit").prop("disabled", false);
+            }
+        });
+        });
+    });
     // Set default style
     d3.select('#Hide')
         .style('color','#86C98A')
@@ -138,6 +190,40 @@
                 //ticked(); // Why was this here in the first place
                 console.log(d3.select(this));
         });
+        //https://stackoverflow.com/questions/29335354/filling-an-svg-path-with-multiple-colors
+        d3.selectAll('#GoRed')
+            .on('click', function(d) {
+                // Update the view
+                var gradDEF = svg.append('defs')
+                                 .append("linearGradient")
+                                 .attr("id","grad1")
+                                 .style("opacity", 0.5)
+                                 .attr("x1", d3.select('#NODE_3').select('line').attr('x1'))
+                                 .attr("y1", d3.select('#NODE_3').select('line').attr('y1'))
+                                 .attr("x2", d3.select('#NODE_3').select('line').attr('x2'))
+                                 .attr("y2", d3.select('#NODE_3').select('line').attr('y2'))
+                                 .attr('gradientUnits', 'userSpaceOnUse');
+                    gradDEF.append("stop")
+                        .attr('offset','0%')
+                        .attr('stop-color','#05a')
+                    gradDEF.append("stop")
+                        .attr('offset','25%')
+                        .attr('stop-color','#05a')
+                    gradDEF.append("stop")
+                        .attr('offset','25%')
+                        .attr('stop-color','#639b47')
+                    gradDEF.append("stop")
+                        .attr('offset','55%')
+                        .attr('stop-color','#639b47')
+                    gradDEF.append("stop")
+                        .attr('offset','55%')
+                        .attr('stop-color','#55a')
+                    gradDEF.append("stop")
+                        .attr('offset','100%')
+                        .attr('stop-color','#55a')
+                document.getElementById("NODE_3").style.stroke = 'url(#grad1)';
+        });
+
         d3.selectAll('#Reset')
             .on('click', function(d) {
                 // Update the view
@@ -221,21 +307,6 @@
         var seconds = 10;
         var mouseEvent = 'Null';
 
-        var timerRestart = 0;
-
-        // Create a clock
-        setInterval(incrementClock,1000);
-
-        var dragTimer = setInterval(function() {
-            if (timerRestart == 0 ) {
-                    // Do nothing.
-                }
-                else {
-                    timerRestart = timerRestart - 1;
-                }
-            }, 1000);
-
-
         /* Set the SVG canvas size */
         var width = 900,
             height = 700;
@@ -247,8 +318,8 @@
             .attr('class','visual')
             .call(zoom = d3.zoom().on("zoom", visZoom));
 
-
         d3.select('#visual').select('svg').append("g");
+
 
    // viewPort.call(zoom)
  //   .on("wheel.zoom", null);
@@ -403,6 +474,7 @@
                        .on("end", dragended));
                 console.log(pairs2.call(d3.drag()));
             // Appending data here for mouseover retrieval
+            pairs2.attr('id', function(d) {return d.source});
             pairs2.append('text')
                 .text(function(d) {return d.source});
             pairs2.append('length')
@@ -567,7 +639,6 @@ function mouseOver(d) {
 //https://bl.ocks.org/mbostock/3750558
 function dragstarted(d) {
     mouseEvent = 'Drag';
-    timerRestart = 30;
     stopUpdates();
     stopAnimation();
   if (!d3.event.active) visual.alphaTarget(0.0025).restart();
@@ -657,7 +728,17 @@ function dynamicUpdate() {
         update(d);
         /* Re-energise the simulation */
         visual.alpha(1).restart();
-        seconds = 10; // Not timer not accurate due to 'end' update oddness.
+        pairs.selectAll('line').call(d3.drag()
+                       .on("start", null)
+                       .on("drag", null)
+                      .on("end", null));
+        setTimeout(function() {
+                    pairs.selectAll('line').call(d3.drag()
+                       .on("start", dragstarted)
+                       .on("drag", dragged)
+                       .on("end", dragended));
+        console.log('mouse allowed .');
+    },6000);
 
         }); // End d3.json read
     }
@@ -686,11 +767,6 @@ function stopUpdates() {
 function startUpdates() {
     console.log('restart sim.');
     updater = setInterval(function() {dynamicUpdate()},10000);
-}
-
-function incrementClock() {
-    clock = clock + 1;
-    console.log(clock);
 }
         </script>
         </div> <!--id=npDash-->

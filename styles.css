@@ -26,7 +26,7 @@ body {
     background-color: #FAFAFA;
 }
 .pairs {
-    stroke: #6F90A2;;
+    stroke: #6F90A2;
     stroke-width: 8px;
     mix-blend-mode: multiply;
 }
@@ -80,7 +80,7 @@ body {
     position: relative;
     font: 7px sans-serif;
     height: 100%;
-    background-color: #EEEEEE;
+    background-color: #E0E0E0;
     height:700px;
     width:300px;
     float:left;
@@ -105,6 +105,15 @@ div.content {
     /*border: 1px solid #616161;*/
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     overflow:auto;
+}
+div.contentHeader {
+    font: 16px 'Open Sans', sans-serif;
+    font-weight: 700;
+    background-color: #78909C;
+    padding-top: 10px;
+    padding-right: 5px;
+    padding-bottom: 10px;
+    padding-left:5px;
 }
 div.showNodeNames {
     position: relative;
@@ -144,45 +153,51 @@ div.hideNodeNames p{
 }
 div.card {
     display: block;
-    background-color: lightblue;
+    background-color: #ffffff;
     margin-top: 10px;
-    margin-right: 15px;
+    margin-right: 4px;
     margin-bottom: 10px;
-    margin-left: 15px;
+    margin-left: 4px;
+    box-shadow: 0 2px 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
     overflow: auto;
+}
+div.cardTitle {
+    font: 14px 'Open Sans', sans-serif;
+    font-weight: 500;
+    text-align: left;
+    background-color: #ffffff;
+    padding-top: 8px;
+    padding-right: 5px;
+    padding-bottom: 8px;
+    padding-left:16px;
+    border-bottom: solid 1px;
+    border-color: #e6e6e6;
 }
 div.pageTitle {
     font: 16px 'Open Sans', sans-serif;
     font-weight: 800;
 }
-div.cardTitle {
-    font: 14px 'Open Sans', sans-serif;
-    font-weight: 600;
-    background-color: #78909C;
-    padding-top: 5px;
-    padding-right: 5px;
-    padding-bottom: 5px;
-    padding-left:5px;
-}
+
 div.visual {
     display:block;
     overflow: auto; 
 }
 div.cardLine {
-    background-color: #F5F5F5;
+    background-color: #ffffff;
     overflow: auto; 
 }
 div.cardLineHeader {
-    background-color: #E0E0E0;
+    background-color: #ffffff;
     width: 80px;
     font: 14px 'Open Sans', sans-serif;
+    text-align: left;
     display: block;
     position: relative;
     float: left;
     padding-top: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
-    padding-left:5px;
+    padding-left:16px;
 }
 div.cardLineContent {
     font: 14px 'Open Sans', sans-serif;
@@ -203,13 +218,12 @@ div.cardLineButtons {
     padding-left:5px;
 }
 div.toggleButton {
-    background-color: #EEEEEE;
     width: 75px;
     font: 14px 'Open Sans', sans-serif;
     font-weight: 700;
     display: block;
     position: relative;
-    float: left;
+    float: right;
     padding-top: 5px;
     padding-right: 5px;
     padding-bottom: 5px;
@@ -219,9 +233,9 @@ div.toggleButton {
 
 
 .custom-file-upload {
-    float: left;
-    width: 80px;
-    background-color: #4CAF50;
+    float: right;
+    width: 78px;
+    background-color: #78909C;
     border: none;
     color: white;
     padding: 5px 5px;
